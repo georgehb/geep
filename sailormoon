@@ -1,0 +1,88 @@
+% Intro
+beep(g3, 214, console_fd);
+beep(c4, 214, console_fd);
+beep(eb4, 214, console_fd);
+beep_chord(c3, g4, 214, console_fd);
+beep_chord(g3, g4, 214, console_fd);
+beep_chord(eb3, g4, 214, console_fd);
+beep_chord(g3, f4, 214, console_fd);
+beep_chord(c3, f4, 214, console_fd);
+beep_chord(g3, f4, 214, console_fd);
+beep_chord(eb3, eb4, 214, console_fd);
+beep(g3, 214, console_fd);
+beep_chord(g2, d4, 214, console_fd);
+beep_chord(f3, d4, 214, console_fd);
+beep_chord(d3, f4, 214, console_fd);
+beep_chord(f3, f4, 214, console_fd);
+beep(g2, 214, console_fd);
+beep_chord(g2, b2, 214, console_fd);
+beep(d3, 214, console_fd);
+beep(f3, 214, console_fd);
+beep(ab3, 214, console_fd);
+beep(f2, 214, console_fd);
+beep(ab3, 214, console_fd);
+beep(bb3, 214, console_fd);
+beep(f2, 214, console_fd);
+beep(ab3, 214, console_fd);
+beep(g3, 214, console_fd);
+beep(f3, 214, console_fd);
+beep(eb3, 214, console_fd);
+beep(g2, 214, console_fd);
+beep(g3, 214, console_fd);
+beep(g2, 214, console_fd);
+beep(c2, 214, console_fd);
+beep(g2, 214, console_fd);
+beep(c3, 214, console_fd);
+beep(eb3, 214, console_fd);
+beep(c4, 214, console_fd);
+beep(g2, 214, console_fd);
+beep(eb2, 214, console_fd);
+beep(c4, 214, console_fd);
+beep(b3, 214, console_fd);
+beep(g2, 214, console_fd);
+beep(eb2, 214, console_fd);
+beep(b3, 214, console_fd);
+beep(bb3, 214, console_fd);
+beep(ab3, 214, console_fd);
+beep(f2, 214, console_fd);
+beep(ab3, 214, console_fd);
+beep(g3, 214, console_fd);
+beep(f3, 214, console_fd);
+beep(g3, 214, console_fd);
+beep(g2, 214, console_fd);
+beep(f3, 214, console_fd);
+beep(f2, 214, console_fd);
+beep(eb3, 214, console_fd);
+beep(d3, 214, console_fd);
+beep(b2, 214, console_fd);
+beep(c3, 214, console_fd);
+beep(g1, 214, console_fd);
+
+% Verse 1 bar 9
+g2 c3 eb3 g3 g2 g3 f3 g2 f3 eb3 eb3 d3 f2 f3 f2 g1 
+g2 b2 d3 f3 f2 f3 eb3 f2 eb3 d3 f2 c3 g2 eb3 g2 r g1 
+c3 eb3 g3 g2 g3 f3 g2 f3 eb3 eb3 d3 f2 f3 f2 g1 
+g2 b2 d3 f3 f2 g3 f3 eb3 d3 g1 eb3 r gb1 g1 b1 c2
+
+% Verse 2 bar 17
+g2 c3 eb3 g3 g2 g3 f3 g2 f3 eb3 eb3 d3 f2 f3 f2 g1 
+g2 b2 d3 f3 f2 f3 eb3 f2 eb3 d3 f2 c3 g2 eb3 g2 r g1 
+c3 eb3 g3 g2 g3 f3 g2 f3 g3 g3 bb3 g1 ab3 r3 f2
+ab3 g3 f3 g3 g2 f3 f3 eb3 d3 b2 c3 c2 c2 c2 c2 r
+
+% Chorus bar 25
+c3 ab3 ab2 c3 ab2 c3 bb3 c4 c3 c4 c3 bb3 ab3 ab2 c3 g3 g2 eb2 f3 eb3 f3 eb2 g3 g2 eb2 g2 c2
+c3 ab3 ab2 c3 ab2 c3 bb3 c4 eb3 c3 c4 c4 bb3 ab3 g3 
+gb2 g2 r eb3 d3 r bb2 b2 d3 ab3 g3
+
+% Verse 3 bar 33
+g2 c3 eb3 g3 g2 g3 f3 g2 f3 eb3 eb3 d3 f2 f3 f2 g1 
+g2 b2 d3 f3 f2 g3 f3 eb3 d3 f2 c3 g2 eb3 g2 g1
+c3 eb3 g3 g2 g3 f3 g2 f3 g3 g3 bb3 ab3 ab3 f1
+ab3 g3 f3 g3 g2 f3 f2 eb3 d3 b2 c3 c2 c2 c2 c2
+
+% Outro bar 94
+g3 f3 g3 g2 f3 f2 eb3 d3 b2 c3 c2 c2 c2 c2
+g3 f3 g3 g2 a3 f2 bb3 b3 b2 c4 r c2 eb3 g3 d4
+
+%c3 r c2 eb3 g3 d4 
