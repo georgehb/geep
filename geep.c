@@ -14,7 +14,7 @@
 
 #define CLOCK_TICK_RATE 1193180lu
 
-static int min(int x, int y)
+static uint64_t min(uint64_t x, uint64_t y)
 {
 	return x < y ? x : y;
 }
@@ -45,9 +45,9 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 	signal(SIGINT, quit);
-	beep(g2, quaver);
-	beep(c3, quaver);
-	beep(eb3, quaver);
+	beep_chord(1, g2, quaver);
+	beep_chord(1, c3, quaver);
+	beep_chord(1, eb3, quaver);
 	beep_chord(c2, g3, quaver);
 	beep_chord(g2, g3, quaver);
 	beep_chord(eb2, g3, quaver);
@@ -55,12 +55,12 @@ int main()
 	beep_chord(c2, f3, quaver);
 	beep_chord(g2, f3, quaver);
 	beep_chord(eb2, eb3, quaver);
-	beep(g2, quaver);
+	beep_chord(1, g2, quaver);
 	beep_chord(g1, d3, quaver);
 	beep_chord(f2, d3, quaver);
 	beep_chord(d2, f3, quaver);
 	beep_chord(f2, f3, quaver);
-	beep(g1, quaver);
+	beep_chord(1, g1, quaver);
 	beep_chord(g1, b2, quaver);
 	beep_chord(d2, d3, quaver);
 	beep_chord(f2, f3, quaver);
@@ -76,26 +76,26 @@ int main()
 	beep_chord(g2, eb2, quaver);
 	beep_chord(eb2, g3, quaver);
 	beep_chord(g2, g3, quaver);
-	beep(c3, quaver);
+	beep_chord(1, c3, quaver);
 	beep_chord(g2, g2, quaver);
 	beep_chord(eb2, c3, quaver);
 	beep_chord(g2, eb3, quaver);
 	beep_chord(c2, c4, quaver);
 	beep_chord(g2, c4, quaver);
-	beep(eb2, quaver);
+	beep_chord(1, eb2, quaver);
 	beep_chord(g2, c4, quaver);
 	beep_chord(c2, b3, quaver);
 	beep_chord(g2, b3, quaver);
-	beep(eb2, quaver);
+	beep_chord(1, eb2, quaver);
 	beep_chord(g2, b3, quaver);
 	beep_chord(f2, bb3, quaver);
 	beep_chord(c3, bb3, quaver);
 	beep_chord(ab2, ab3, quaver);
-	beep(ab3, quaver);
+	beep_chord(1, ab3, quaver);
 	beep(r, quaver);
-	beep(ab3, quaver);
-	beep(g3, quaver);
-	beep(f3, quaver);
+	beep_chord(1, ab3, quaver);
+	beep_chord(1, g3, quaver);
+	beep_chord(1, f3, quaver);
 	beep_chord(g1, g3, quaver);
 	beep_chord(g2, g3,  quaver);
 	beep_chord(ab1, f3, quaver);
@@ -123,26 +123,23 @@ void beep(int freq, int length) {
 	do_beep(0, console_fd);
 }
 
-/* 
- * N.B.: freq1 must be less than freq2 
- */
 void beep_chord(int freq1, int freq2, int length) {
 	struct timespec start;
-	struct timespec sample_start;
 	struct timespec time;
 	uint64_t diff;
-	int period1 = CLOCK_TICK_RATE / freq1;
-	int period2 = CLOCK_TICK_RATE / freq2;
-	int sample = 0;
-	int sample1 = 1;
-	int sample2 = 1;
-	int next_tick;
+	uint64_t period1 = CLOCK_TICK_RATE / freq1;
+	uint64_t period2 = CLOCK_TICK_RATE / freq2;
+	uint64_t sample = 0;
+	uint64_t sample1 = 1;
+	uint64_t sample2 = 1;
+	uint64_t next_tick;
+	uint64_t overshoot = 0;
 
 	clock_gettime(CLOCK_REALTIME, &start);
 	clock_gettime(CLOCK_REALTIME, &time);
-	diff  = time_diff(&time, &start);
+	diff  = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
 
-	while (diff < 1000000lu * length) {
+	while (diff < 1000000lu * length * CLOCK_TICK_RATE / 1000000000) {
 		next_tick = min(period1 * sample1, period2 * sample2);
 		if (next_tick == period1 * sample1) {
 			sample1++;
@@ -150,14 +147,21 @@ void beep_chord(int freq1, int freq2, int length) {
 	       	if (next_tick == period2 * sample2) {
 			sample2++;
 		}
-		ioctl(console_fd, KIOCSOUND, next_tick - sample);
-		while (diff < (double)next_tick / CLOCK_TICK_RATE * 1000000000) {
-			clock_gettime(CLOCK_REALTIME, &time);
-			diff = time_diff(&time, &start);
-			struct timespec sleep = {0, 1};
-			nanosleep(&sleep, NULL);
+		if (next_tick < sample + 80) {
+			continue;
 		}
-		sample = next_tick;
+		ioctl(console_fd, KIOCSOUND, 40);
+		while (diff < sample + 80) {
+			clock_gettime(CLOCK_REALTIME, &time);
+			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
+		}
+		ioctl(console_fd, KIOCSOUND, 0);
+		while (diff < next_tick) {
+			clock_gettime(CLOCK_REALTIME, &time);
+			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
+		}
+		overshoot = diff - next_tick;
+		sample = next_tick + overshoot;
 	}
 	do_beep(0, console_fd);
 }

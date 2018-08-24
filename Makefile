@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-Wall -O2
+FLAGS=-Wall -O3 -ffast-math
 EXEC_NAME=geep
 INSTALL_DIR=/usr/bin
 
