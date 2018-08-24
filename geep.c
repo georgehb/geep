@@ -8,11 +8,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
-#define CLOCK_TICK_RATE 1193180
-#define SAMPLE_RATE 50000
+#define CLOCK_TICK_RATE 1193180lu
+
+static int min(int x, int y)
+{
+	return x < y ? x : y;
+}
 
 static const int quaver = 214;
 
@@ -32,73 +37,73 @@ void quit(int sig)
 
 int main()
 {
-	if((console_fd = open("/dev/tty0", O_WRONLY)) == -1) {
-		console_fd = open("/dev/vc/0", O_WRONLY);
+	if ((console_fd = open("/dev/tty0", O_WRONLY | O_CLOEXEC)) == -1) {
+		console_fd = open("/dev/vc/0", O_WRONLY | O_CLOEXEC);
 	}
 	if (console_fd == -1) {
 		perror("Couldn't open /dev/tty0 or /dev/vc/0");
 		exit(EXIT_FAILURE);
 	}
 	signal(SIGINT, quit);
-	beep(g3, quaver);
-	beep(c4, quaver);
-	beep(eb4, quaver);
-	beep_chord(c2, g4, quaver);
-	beep_chord(g2, g4, quaver);
-	beep_chord(eb2, g4, quaver);
-	beep_chord(g2, f4, quaver);
-	beep_chord(c2, f4, quaver);
-	beep_chord(g2, f4, quaver);
-	beep_chord(eb2, eb4, quaver);
 	beep(g2, quaver);
-	beep_chord(g1, d4, quaver);
-	beep_chord(f2, d4, quaver);
-	beep_chord(d2, f4, quaver);
-	beep_chord(f2, f4, quaver);
-	beep(g1, quaver);
-	beep_chord(g1, b3, quaver);
-	beep_chord(d2, d4, quaver);
-	beep_chord(f2, f4, quaver);
-	beep_chord(g1, ab4, quaver);
-	beep_chord(f2, ab4, quaver);
-	beep_chord(d2, ab4, quaver);
-	beep_chord(f2, bb4, quaver);
-	beep_chord(g1, bb4, quaver);
-	beep_chord(f2, ab4, quaver);
-	beep_chord(d2, g4, quaver);
-	beep_chord(f2, f4, quaver);
-	beep_chord(c2, eb3, quaver);
-	beep_chord(g2, eb3, quaver);
-	beep_chord(eb2, g4, quaver);
-	beep_chord(g2, g4, quaver);
 	beep(c3, quaver);
+	beep(eb3, quaver);
+	beep_chord(c2, g3, quaver);
 	beep_chord(g2, g3, quaver);
-	beep_chord(eb2, c4, quaver);
-	beep_chord(g2, eb4, quaver);
-	beep_chord(c2, c5, quaver);
-	beep_chord(g2, c5, quaver);
+	beep_chord(eb2, g3, quaver);
+	beep_chord(g2, f3, quaver);
+	beep_chord(c2, f3, quaver);
+	beep_chord(g2, f3, quaver);
+	beep_chord(eb2, eb3, quaver);
+	beep(g2, quaver);
+	beep_chord(g1, d3, quaver);
+	beep_chord(f2, d3, quaver);
+	beep_chord(d2, f3, quaver);
+	beep_chord(f2, f3, quaver);
+	beep(g1, quaver);
+	beep_chord(g1, b2, quaver);
+	beep_chord(d2, d3, quaver);
+	beep_chord(f2, f3, quaver);
+	beep_chord(g1, ab3, quaver);
+	beep_chord(f2, ab3, quaver);
+	beep_chord(d2, ab3, quaver);
+	beep_chord(f2, bb3, quaver);
+	beep_chord(g1, bb3, quaver);
+	beep_chord(f2, ab3, quaver);
+	beep_chord(d2, g3, quaver);
+	beep_chord(f2, f3, quaver);
+	beep_chord(c2, eb2, quaver);
+	beep_chord(g2, eb2, quaver);
+	beep_chord(eb2, g3, quaver);
+	beep_chord(g2, g3, quaver);
+	beep(c3, quaver);
+	beep_chord(g2, g2, quaver);
+	beep_chord(eb2, c3, quaver);
+	beep_chord(g2, eb3, quaver);
+	beep_chord(c2, c4, quaver);
+	beep_chord(g2, c4, quaver);
 	beep(eb2, quaver);
-	beep_chord(g2, c5, quaver);
-	beep_chord(c2, b4, quaver);
-	beep_chord(g2, b4, quaver);
+	beep_chord(g2, c4, quaver);
+	beep_chord(c2, b3, quaver);
+	beep_chord(g2, b3, quaver);
 	beep(eb2, quaver);
-	beep_chord(g2, b4, quaver);
-	beep_chord(f2, bb4, quaver);
-	beep_chord(c3, bb4, quaver);
-	beep_chord(ab2, ab4, quaver);
-	beep(ab4, quaver);
+	beep_chord(g2, b3, quaver);
+	beep_chord(f2, bb3, quaver);
+	beep_chord(c3, bb3, quaver);
+	beep_chord(ab2, ab3, quaver);
+	beep(ab3, quaver);
 	beep(r, quaver);
-	beep(ab4, quaver);
-	beep(g4, quaver);
-	beep(f4, quaver);
-	beep_chord(g2, g4, quaver);
-	beep_chord(g3, g4,  quaver);
-	beep_chord(ab2, f4, quaver);
-	beep_chord(ab3, f4, quaver);
-	beep_chord(a2, eb4, quaver);
-	beep_chord(b2, d4, quaver);
-	beep_chord(b3, d4, quaver);
-	beep_chord(c2, c4, quaver*3);
+	beep(ab3, quaver);
+	beep(g3, quaver);
+	beep(f3, quaver);
+	beep_chord(g1, g3, quaver);
+	beep_chord(g2, g3,  quaver);
+	beep_chord(ab1, f3, quaver);
+	beep_chord(ab2, f3, quaver);
+	beep_chord(a2, eb3, quaver);
+	beep_chord(b2, d3, quaver);
+	beep_chord(b3, d3, quaver);
+	beep_chord(c2, c3, quaver*3);
 	close(console_fd);
 	exit(EXIT_SUCCESS);
 }
@@ -123,23 +128,36 @@ void beep(int freq, int length) {
  */
 void beep_chord(int freq1, int freq2, int length) {
 	struct timespec start;
+	struct timespec sample_start;
 	struct timespec time;
-	/* Beep */
-	uint64_t t = 1000000000lu / (freq2); 
-	for (int i = 0; i < freq2 * length / 2000; i++) {
-		do_beep(freq1, console_fd);
-		clock_gettime(CLOCK_REALTIME, &start);
-		clock_gettime(CLOCK_REALTIME, &time);
-		uint64_t diff = time_diff(&time, &start);
-		while (diff < t) {
+	uint64_t diff;
+	int period1 = CLOCK_TICK_RATE / freq1;
+	int period2 = CLOCK_TICK_RATE / freq2;
+	int sample = 0;
+	int sample1 = 1;
+	int sample2 = 1;
+	int next_tick;
+
+	clock_gettime(CLOCK_REALTIME, &start);
+	clock_gettime(CLOCK_REALTIME, &time);
+	diff  = time_diff(&time, &start);
+
+	while (diff < 1000000lu * length) {
+		next_tick = min(period1 * sample1, period2 * sample2);
+		if (next_tick == period1 * sample1) {
+			sample1++;
+		}
+	       	if (next_tick == period2 * sample2) {
+			sample2++;
+		}
+		ioctl(console_fd, KIOCSOUND, next_tick - sample);
+		while (diff < (double)next_tick / CLOCK_TICK_RATE * 1000000000) {
 			clock_gettime(CLOCK_REALTIME, &time);
 			diff = time_diff(&time, &start);
+			struct timespec sleep = {0, 1};
+			nanosleep(&sleep, NULL);
 		}
-		do_beep(freq2, console_fd);
-		while (diff < 2*t) {
-			clock_gettime(CLOCK_REALTIME, &time);
-			diff = time_diff(&time, &start);
-		}
+		sample = next_tick;
 	}
 	do_beep(0, console_fd);
 }
