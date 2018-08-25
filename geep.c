@@ -1,5 +1,4 @@
 #include "geep.h"
-#include "notes.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
@@ -42,7 +41,7 @@ void geep_close()
 	close(console_fd);
 }
 
-void beep(int freq, uint64_t length) {
+void beep(uint64_t length, int freq) {
 	struct timespec start;
 	struct timespec time;
 	/* Beep */

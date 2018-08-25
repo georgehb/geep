@@ -1,17 +1,20 @@
 CC=gcc
 FLAGS=-Wall -O3 -ffast-math
-INSTALL_DIR=/usr/bin
-COMMON_DEPS=libgeep.a notes.h geep.h
+COMMON_DEPS=libgeep.a tunes/notes.h geep.h
 
-default : sailormoon
+.PHONY : all
+all : tunes libgeep.a
 
-sailormoon : sailormoon.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
+default : all
+
+.PHONY : tunes
+tunes :
+	$(MAKE) -C $@
 
 libgeep.a : geep.o
 	ar rcs $@ $^
 
-gepp.o : geep.c geep.h
+geep.o : geep.c geep.h
 	${CC} -c -o $@ $<
 
 clean :

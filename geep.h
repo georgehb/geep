@@ -27,7 +27,7 @@
 
 int geep_setup();
 void geep_close();
-void beep(int freq, uint64_t length);
+void beep(uint64_t length, int freq);
 void beep_chord(uint64_t length, int num_notes, ...);
 
 #endif /* GEEP_H */

@@ -2,7 +2,7 @@
 #define QUALITY 100 
 
 #include "notes.h"
-#include "geep.h"
+#include "../geep.h"
 #include <linux/kd.h>
 #include <signal.h>
 #include <stdio.h>
