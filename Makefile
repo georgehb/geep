@@ -1,15 +1,18 @@
 CC=gcc
 FLAGS=-Wall -O3 -ffast-math
-EXEC_NAME=geep
 INSTALL_DIR=/usr/bin
+COMMON_DEPS=libgeep.a notes.h geep.h
 
-default : geep
+default : sailormoon
+
+sailormoon : sailormoon.c ${COMMON_DEPS}
+	${CC} ${FLAGS} -o $@ $^
+
+libgeep.a : geep.o
+	ar rcs $@ $^
+
+gepp.o : geep.c geep.h
+	${CC} -c -o $@ $<
 
 clean :
-	rm ${EXEC_NAME}
-
-geep : geep.c
-	${CC} ${FLAGS} -o ${EXEC_NAME} geep.c
-
-install :
-	cp ${EXEC_NAME} ${INSTALL_DIR}
+	rm -f *.o *.a
