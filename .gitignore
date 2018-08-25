@@ -1,4 +1,6 @@
 geep
+tags
+*.taghl
 
 # Prerequisites
 *.d
