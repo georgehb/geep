@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <linux/input.h>
 #include <linux/kd.h>
+#include <math.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -14,6 +15,7 @@
 #include <time.h>
 #include <unistd.h>
 
+
 static uint64_t min(uint64_t x, uint64_t y)
 {
 	return x < y ? x : y;
@@ -24,9 +26,11 @@ static uint64_t time_diff(const struct timespec *cur,
 static void do_beep(int freq, int console_fd);
 
 static int console_fd = -1;
+static int quality;
 
-int geep_setup()
+int geep_setup(int sound_quality)
 {
+	quality = sound_quality;
 	if ((console_fd = open("/dev/tty0", O_WRONLY | O_CLOEXEC)) == -1) {
 		console_fd = open("/dev/vc/0", O_WRONLY | O_CLOEXEC);
 	}
@@ -69,23 +73,20 @@ void beep(uint64_t length, int num_notes, ...) {
 		for (int i = 0; i < num_notes; i++) {
 			next_tick = min(next_tick, periods[i] * samples[i]);
 		}
-		bool match = true;
 		for (int i = 0; i < num_notes; i++) {
 			if (next_tick == periods[i] * samples[i]) {
 				samples[i]++;
-			} else {
-				match = false;
+			}
+			while (sample > periods[i] * samples[i]) {
+				samples[i]++;
 			}
 		}
-		/*if (num_notes > 1 && num_notes % 2 && match) {
-			continue;
-		}*/
 		/* 
 		 * The following two magic numbers are just that - they sound
 		 * good on George's machine, who knows why.
 		 */
 		ioctl(console_fd, KIOCSOUND, 40000);
-		while (diff < sample + QUALITY) {
+		while (diff < sample + quality) {
 			clock_gettime(CLOCK_REALTIME, &time);
 			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
 		}

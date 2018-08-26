@@ -1,5 +1,4 @@
 #define BPM 140
-#define QUALITY 100 
 
 #include "notes.h"
 #include "../geep.h"
@@ -19,9 +18,9 @@ void quit(int sig)
 
 int main()
 {
-    console_fd = geep_setup();
+    console_fd = geep_setup(180);
     signal(SIGINT, quit);
-/*
+
     // bar 65 (upbeat)
     beep(QUAVER, 2, 1, g3);
     rest(SEPARATION);
@@ -202,7 +201,6 @@ int main()
     rest(SEPARATION);
     beep(CROTCHET+SEPARATION, 5, ab1, g5, eb5, c5, g4);
 
-*/
     // bar 77
     rest(SEPARATION);
     beep(QUAVER, 2, ab1, f5);
@@ -264,17 +262,18 @@ int main()
 
     // bar 81
     beep(QUAVER*3+SEPARATION*2, 6, ab1, ab2, g3, c4, eb4, g4);
+    rest(SEPARATION);
     beep(QUAVER*3+SEPARATION*2, 6, g1, g2, bb2, f3, bb3, d4);
-    beep(SEPARATION, 2, g4, c5);
+    rest(SEPARATION);
     beep(QUAVER*3+SEPARATION*2, 6, ab1, ab2, g3, c4, eb4, g4);
-    beep(SEPARATION, 2, g4, c5);
+    rest(SEPARATION);
     beep(QUAVER*3+SEPARATION*2, 6, g1, g2, bb2, f3, bb3, d4);
-    beep(SEPARATION, 2, g4, c5);
+    rest(SEPARATION);
     beep(QUAVER*3+SEPARATION*2, 6, ab1, ab2, g3, c4, eb4, g4);
-    beep(SEPARATION, 2, g4, c5);
-    beep(QUAVER, 3, g4, c5, bb5);
-    beep(SEPARATION, 2, g4, c5);
-    beep(QUAVER, 3, g4, c5, c6);
+    rest(SEPARATION);
+    beep(QUAVER, 1, bb5);
+    rest(SEPARATION);
+    beep(QUAVER, 1, c6);
 
 
 

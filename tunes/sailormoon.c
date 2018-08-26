@@ -1,5 +1,4 @@
 #define BPM 140
-#define QUALITY 100 
 
 #include "notes.h"
 #include "../geep.h"
@@ -19,7 +18,7 @@ void quit(int sig)
 
 int main()
 {
-	console_fd = geep_setup();
+	console_fd = geep_setup(100);
 	signal(SIGINT, quit);
 
 	// 1
