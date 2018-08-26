@@ -1,7 +1,14 @@
 #ifndef NOTES_H
 #define NOTES_H
 
-static const int r=0;
+#define NANOSECONDS 1000000000lu
+#define CROTCHET (NANOSECONDS * 60lu / BPM)
+#define QUAVER (CROTCHET / 2)
+#define SEMIQUAVER (CROTCHET / 4)
+#define DEMISEMIQUAVER (CROTCHET / 8)
+#define SIXTH (CROTCHET / 6)
+#define SEPARATION (CROTCHET / 50)
+
 static const int c0=16;
 static const int cs0=17;
 static const int db0=17;

@@ -17,17 +17,10 @@
 #endif
 
 #define CLOCK_TICK_RATE 1193180lu
-#define NANOSECONDS 1000000000lu
-#define CROTCHET (NANOSECONDS * 60lu / BPM)
-#define QUAVER (CROTCHET / 2)
-#define SEMIQUAVER (CROTCHET / 4)
-#define DEMISEMIQUAVER (CROTCHET / 8)
-#define SIXTH (CROTCHET / 6)
-#define SEPARATION (CROTCHET / 25)
 
 int geep_setup();
 void geep_close();
-void beep(uint64_t length, int freq);
-void beep_chord(uint64_t length, int num_notes, ...);
+void beep(uint64_t length, int num_notes, ...);
+void rest(uint64_t length);
 
 #endif /* GEEP_H */

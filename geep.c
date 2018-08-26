@@ -5,6 +5,7 @@
 #include <linux/kd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,22 +42,7 @@ void geep_close()
 	close(console_fd);
 }
 
-void beep(uint64_t length, int freq) {
-	struct timespec start;
-	struct timespec time;
-	/* Beep */
-	do_beep(freq, console_fd);
-	clock_gettime(CLOCK_REALTIME, &start);
-	clock_gettime(CLOCK_REALTIME, &time);
-	uint64_t diff = time_diff(&time, &start);
-	while (diff < length) {
-		clock_gettime(CLOCK_REALTIME, &time);
-		diff = time_diff(&time, &start);
-	}
-	do_beep(0, console_fd);
-}
-
-void beep_chord(uint64_t length, int num_notes, ...) {
+void beep(uint64_t length, int num_notes, ...) {
 	struct timespec start;
 	struct timespec time;
 	uint64_t diff;
@@ -83,11 +69,17 @@ void beep_chord(uint64_t length, int num_notes, ...) {
 		for (int i = 0; i < num_notes; i++) {
 			next_tick = min(next_tick, periods[i] * samples[i]);
 		}
+		bool match = true;
 		for (int i = 0; i < num_notes; i++) {
 			if (next_tick == periods[i] * samples[i]) {
 				samples[i]++;
+			} else {
+				match = false;
 			}
 		}
+		/*if (num_notes > 1 && num_notes % 2 && match) {
+			continue;
+		}*/
 		/* 
 		 * The following two magic numbers are just that - they sound
 		 * good on George's machine, who knows why.
@@ -98,12 +90,30 @@ void beep_chord(uint64_t length, int num_notes, ...) {
 			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
 		}
 		ioctl(console_fd, KIOCSOUND, 0);
-		while (diff < next_tick) {
+		while (diff < next_tick && diff < length * CLOCK_TICK_RATE / 1000000000) {
 			clock_gettime(CLOCK_REALTIME, &time);
 			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
 		}
 		overshoot = diff - next_tick;
 		sample = next_tick + overshoot;
+	}
+}
+
+void rest(uint64_t length)
+{
+	struct timespec start;
+	struct timespec time;
+	struct timespec sleep = {0, 1000000};
+	uint64_t diff;
+	
+	clock_gettime(CLOCK_REALTIME, &start);
+	clock_gettime(CLOCK_REALTIME, &time);
+	diff  = time_diff(&time, &start);
+
+	while (diff < length) {
+		nanosleep(&sleep, NULL);
+		clock_gettime(CLOCK_REALTIME, &time);
+		diff  = time_diff(&time, &start);
 	}
 }
 

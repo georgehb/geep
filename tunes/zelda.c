@@ -16,177 +16,282 @@ void quit(int sig)
 	ioctl(console_fd, KIOCSOUND, 0);
 	exit(EXIT_FAILURE);
 }
-/*
-   %% crotchet  = 4
-   %% quaver    = 2
-   %% semi quav = 1
-   600
-
-   bb2*4 r*2 bb1*1 bb1*1 bb1*2 bb2*2 bb2*2 bb2*1 bb2*1
-   bb2*3 ab2*1 bb2*2 ab1*1 ab1*1 ab1*2 bb2*2 bb2*2 bb2*1 bb2*1
-   bb2*3 ab2*1 bb2*2 gb1*1 gb1*1 gb1*2 bb2*2 bb2*2 bb2*1 bb2*1
-   bb2*2 f2*1 f2*1 f2*2 f2*1 f2*1 f2*2 f2*1 f2*1 f2*2 f2*2
-
-   % bar 5
-   bb2*4 f2*4 r*2 bb2*2 bb2*1 c3*1 d3*1 eb3*1
-   f3*2 bb3*2 bb3*1 c4*1 d4*1 eb4*1 f4*2 
-   f3*2 f3*2 gb3*1 ab3*1
-
-   bb3*4 gb4*1 ab4*1 bb4*1 c5*1 db5*1 r*1 
-   bb3*2 bb3*2 ab3*1 gb3*1
-   ab3*3 gb3*1 f3*2 db4*1 eb4*1 f4*2 db4*2 f3*4
-
-   % bar 9
-   eb3*3 f3*1 gb3*2 gb4*1 ab4*1 bb4*2 gb4*1 ab4*1 f3*2 eb3*2
-   db3*3 eb3*1 f3*2 f4*1 gb4*1 ab4*2 f4*1 gb4*1 eb3*2 db3*2
-   c3*3 d3*1 e3*2 e4*1 f4*1 g4*2 g4*1 a4*1 g3*4
-   f3*2 bb2*1 bb2*1 bb2*2 bb2*1 bb2*1 bb2*2 r*4
-   r*2 a2*1 a2*1 a2*2 a2*1 a2*1 a2*2 r*4
-   */
 
 int main()
 {
 	console_fd = geep_setup();
 	signal(SIGINT, quit);
+	
+	// 1
+	beep(CROTCHET, 2, d4, 	bb4);
+	rest(QUAVER);
+	beep(SEMIQUAVER, 2, 1, 	bb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, 1, 	bb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, 1, 	bb2);
+	rest(SEMIQUAVER);
+	beep(QUAVER, 2, d4, 	bb4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, d4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, d4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, d4, 	bb4);
+	rest(SEPARATION);
 
-	beep_chord(CROTCHET, 2, 1, bb2);
-	beep(QUAVER, r);
-	beep_chord(SEMIQUAVER, 2, 1, bb1);
-	beep_chord(SEMIQUAVER, 2, 1, bb1);
-	beep_chord(QUAVER, 2, 1, bb1);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
+	// 2
+	beep(SEMIQUAVER*3, 2, c4, bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, c4, 	ab4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, c4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, ab2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, ab2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, ab2);
+	rest(SEMIQUAVER);
+	beep(QUAVER, 2, c4, 	bb4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, c4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, c4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, c4, 	bb4);
+	rest(SEPARATION);
 
-	beep_chord(SEMIQUAVER*3, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, ab2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, ab1);
-	beep_chord(SEMIQUAVER, 2, 1, ab1);
-	beep_chord(QUAVER, 2, 1, ab1);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
+	// 3
+	beep(SEMIQUAVER*3, 2, db4, bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, db4, 	ab4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, db4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, gb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, gb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, gb2);
+	rest(SEMIQUAVER);
+	beep(QUAVER, 2, db4, 	bb4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, db4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, db4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, db4, 	bb4);
+	rest(SEPARATION);
 
-	beep_chord(SEMIQUAVER*3, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, ab2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, gb1);
-	beep_chord(SEMIQUAVER, 2, 1, gb1);
-	beep_chord(QUAVER, 2, 1, gb1);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
+	// 4
+	beep(QUAVER, 2, db4, 	bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, a3, 	f4);
+	rest(SEPARATION);
+	beep(QUAVER, 2, eb2, 	f4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, g2, 	f4);
+	beep(SEPARATION, 1, 	f4);
+	beep(SEMIQUAVER, 2, a2, 	f4);
+	rest(SEPARATION);
 
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, f2);
-	beep_chord(SEMIQUAVER, 2, 1, f2);
-	beep_chord(QUAVER, 2, 1, f2);
-	beep_chord(SEMIQUAVER, 2, 1, f2);
-	beep_chord(SEMIQUAVER, 2, 1, f2);
-	beep_chord(QUAVER, 2, 1, f2);
-	beep_chord(SEMIQUAVER, 2, 1, f2);
-	beep_chord(SEMIQUAVER, 2, 1, f2);
-	beep_chord(QUAVER, 2, 1, f2);
-	beep_chord(QUAVER, 2, 1, f2);
+loop:
+	// 5
+	beep(SEMIQUAVER, 2, bb2, 	bb4);
+	beep(SEMIQUAVER, 1,  	bb4);
+	beep(SEMIQUAVER, 1, bb3);
+	rest(SEMIQUAVER);
+	beep(QUAVER, 1,  		f4);
+	beep(SEMIQUAVER, 2, bb3, 	f4);
+	beep(SEMIQUAVER, 1, 	f4);
+	rest(QUAVER);
+	beep(SEMIQUAVER, 1, bb3);
+	beep(SEMIQUAVER, 1, 		bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, bb2, 	bb4);
+	beep(SEMIQUAVER, 1, 	c5);
+	beep(SEMIQUAVER, 2, bb3, 	d5);
+	beep(SEMIQUAVER, 1, 	eb5);
 
-	beep_chord(CROTCHET, 2, 1, bb2);
-	beep_chord(CROTCHET, 2, 1, f2);
-	beep(QUAVER, r);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, c3);
-	beep_chord(SEMIQUAVER, 2, 1, d3);
-	beep_chord(SEMIQUAVER, 2, 1, eb3);
+	// 6
+	beep(SEMIQUAVER, 2, ab2, 	f5);
+	beep(SEMIQUAVER, 1, 	f5);
+	beep(SEMIQUAVER, 3, ab3, 	f5, 	bb5);
+	beep(SEMIQUAVER, 2, 	f5);
+	beep(SEMIQUAVER, 2, 	f5, 	bb5);
+	beep(SEMIQUAVER, 2, 	f5, 	c6);
+	beep(SEMIQUAVER, 3, ab3, 	f5, 	d6);
+	beep(SEMIQUAVER, 2,  	f5, 	eb6);
+	beep(SEMIQUAVER, 3, ab2, 	f5, 	f6);
+	beep(SEMIQUAVER, 2,  	f5,	f6);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, ab3, 	f5);
+	beep(SEMIQUAVER, 1,  	f5);
+	rest(SEPARATION);
+	beep(QUAVER, 1,  		f5);
+	beep(SEMIQUAVER, 2, ab3, 	gb5);
+	beep(SEMIQUAVER, 1,  	ab5);
 
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(QUAVER, 2, 1, bb3);
-	beep_chord(SEMIQUAVER, 2, 1, bb3);
-	beep_chord(SEMIQUAVER, 2, 1, c4);
-	beep_chord(SEMIQUAVER, 2, 1, d4);
-	beep_chord(SEMIQUAVER, 2, 1, eb4);
-	beep_chord(QUAVER, 2, 1, f4);
+	// 7
+	beep(SEMIQUAVER, 2, fs2, 	bb5);
+	beep(SEMIQUAVER, 1,  	bb5);
+	beep(SEMIQUAVER, 2, fs3, 	bb5);
+	beep(SEMIQUAVER, 1, 	bb5);
+	beep(SEMIQUAVER, 2, 	bb5, 	db6);
+	beep(SEMIQUAVER, 2, 	bb5, 	gb6);
+	beep(SEMIQUAVER, 3, fs3, 	bb5, 	ab6);
+	beep(SEMIQUAVER, 2,  	bb5, 	bb6);
+	beep(SEMIQUAVER, 3, fs2, 	bb5, 	db7);
+	beep(SEMIQUAVER, 2,  	bb5,  	db7);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 2, fs3, 	bb5);
+	beep(SEMIQUAVER, 1,  	bb5);
+	rest(SEPARATION);
+	beep(QUAVER, 1,  		bb5);
+	beep(SEMIQUAVER, 2, fs3, 	ab5);
+	beep(SEMIQUAVER, 1,  	gb5);
 
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(SEMIQUAVER, 2, 1, gb3);
-	beep_chord(SEMIQUAVER, 2, 1, ab3);
+	// 8
+	beep(SEMIQUAVER, 2, db3, 	ab5);
+	beep(SEMIQUAVER, 1,  	ab5);
+	beep(SEMIQUAVER, 1, db4);
+	beep(SEMIQUAVER, 1,  	gb5);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 3, db4, 	f5, 	db6);
+	beep(SEMIQUAVER, 2,  	f5, 	eb6);
+	beep(SEMIQUAVER, 3, db3, 	f5, 	f6);
+	beep(SEMIQUAVER, 2,  	f5);
+	beep(SEMIQUAVER, 3, db4, 	f5, 	db6);
+	beep(SEMIQUAVER, 2, 	f5);
+	beep(SEMIQUAVER, 2,  	f5, 	ab5);
+	beep(SEMIQUAVER, 2,  	f5, 	ab5);
+	beep(SEMIQUAVER, 1, db4);
+	rest(SEMIQUAVER);
 
-	beep_chord(CROTCHET, 2, 1, bb3);
-	beep_chord(SEMIQUAVER, 2, 1, gb4);
-	beep_chord(SEMIQUAVER, 2, 1, ab4);
-	beep_chord(SEMIQUAVER, 2, 1, bb4);
-	beep_chord(SEMIQUAVER, 2, 1, c5);
-	beep_chord(SEMIQUAVER, 2, 1, db5);
-	beep(SEMIQUAVER, r);
+	// 9
+	beep(SEMIQUAVER, 2, b2, 	eb5);
+	rest(SEMIQUAVER);
+	beep(SEMIQUAVER, 2, b3, 	eb5);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 1,  	gb5);
+	beep(SEMIQUAVER, 1,  	gb5);
+	beep(SEMIQUAVER, 3, b3, 	gb5, 	eb6);
+	beep(SEMIQUAVER, 2,  	gb5, 	f6);
+	beep(SEMIQUAVER, 3, b2, 	gb5, 	gb6);
+	beep(SEMIQUAVER, 1,  	gb5);
+	beep(SEMIQUAVER, 3, b3, 	gb5, 	eb6);
+	beep(SEMIQUAVER, 1,  		f6);
+	beep(SEMIQUAVER, 2,  	f5, 	gb6);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 2, b3, 	eb5);
+	beep(SEMIQUAVER, 1,  	eb5);
 
-	beep_chord(QUAVER, 2, 1, bb3);
-	beep_chord(QUAVER, 2, 1, bb3);
-	beep_chord(SEMIQUAVER, 2, 1, ab3);
-	beep_chord(SEMIQUAVER, 2, 1, gb3);
+	// 10
+	beep(SEMIQUAVER, 2, bb2, 	db5);
+	rest(SEMIQUAVER);
+	beep(SEMIQUAVER, 2, bb3, 	db5);
+	beep(SEMIQUAVER, 1,  	eb5);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 3, bb3, 	f5, 	db6);
+	beep(SEMIQUAVER, 2, 	f5, 	eb6);
+	beep(SEMIQUAVER, 3, bb2, 	f5, 	f6);
+	beep(SEMIQUAVER, 1,  	f5);
+	beep(SEMIQUAVER, 3, bb3, 	f5, 	db6);
+	beep(SEMIQUAVER, 1,  		eb6);
+	beep(SEMIQUAVER, 2,  	eb5, 	f6);
+	beep(SEMIQUAVER, 1,  	eb5);
+	beep(SEMIQUAVER, 2, bb3, 	db5);
+	beep(SEMIQUAVER, 1,  	db5);
 
-	beep_chord(SEMIQUAVER*3, 2, 1, ab3);
-	beep_chord(SEMIQUAVER, 2, 1, gb3);
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(SEMIQUAVER, 2, 1, db4);
-	beep_chord(SEMIQUAVER, 2, 1, eb4);
-	beep_chord(QUAVER, 2, 1, f4);
-	beep_chord(QUAVER, 2, 1, db4);
-	beep_chord(CROTCHET, 2, 1, f3);
+	// 11
+	beep(SEMIQUAVER, 2, c3, 	c5);
+	rest(SEMIQUAVER);
+	beep(SEMIQUAVER, 2, c4, 	c5);
+	beep(SEMIQUAVER, 1,  	d5);
+	beep(SEMIQUAVER, 1,  	e5);
+	beep(SEMIQUAVER, 1,  	e5);
+	beep(SEMIQUAVER, 3, c4, 	e5, 	c6);
+	beep(SEMIQUAVER, 2, 	e5, 	d6);
+	beep(SEMIQUAVER, 3, c3, 	e5, 	e6);
+	beep(SEMIQUAVER, 1, 	e5);
+	beep(SEMIQUAVER, 3, c4, 	e5, 	e6);
+	beep(SEMIQUAVER, 1, 	 	f6);
+	beep(SEMIQUAVER, 2, 	g5,	g6);
+	beep(SEMIQUAVER, 2,  	g5, 	a6);
+	beep(SEMIQUAVER, 3, c4, 	g5, 	bb6);
+	beep(SEMIQUAVER, 2, 	g5, 	c7);
 
-	beep_chord(SEMIQUAVER*3, 2, 1, eb3);
-	beep_chord(SEMIQUAVER, 2, 1, f3);
-	beep_chord(QUAVER, 2, 1, gb3);
-	beep_chord(SEMIQUAVER, 2, 1, gb4);
-	beep_chord(SEMIQUAVER, 2, 1, ab4);
-	beep_chord(QUAVER, 2, 1, bb4);
-	beep_chord(SEMIQUAVER, 2, 1, gb4);
-	beep_chord(SEMIQUAVER, 2, 1, ab4);
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(QUAVER, 2, 1, eb3);
+	// 12
+	beep(SEMIQUAVER, 3, c5, 	f5, 	a6);
+	rest(SEMIQUAVER);
+	beep(SEMIQUAVER, 1, 		bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 	 	bb4);
+	rest(SEPARATION);
+	beep(QUAVER, 1, 		bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		bb4);
+	rest(SEPARATION);
+	beep(QUAVER, 1, 		bb4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 	eb3);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 	eb3);
+	rest(SEPARATION);
+	beep(QUAVER, 1, 		eb3);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 	eb3);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 	eb3);
+	rest(SEPARATION);
 
-	beep_chord(SEMIQUAVER*3, 2, 1, db3);
-	beep_chord(SEMIQUAVER, 2, 1, eb3);
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(SEMIQUAVER, 2, 1, f4);
-	beep_chord(SEMIQUAVER, 2, 1, gb4);
-	beep_chord(QUAVER, 2, 1, ab4);
-	beep_chord(SEMIQUAVER, 2, 1, f4);
-	beep_chord(SEMIQUAVER, 2, 1, gb4);
-	beep_chord(QUAVER, 2, 1, eb3);
-	beep_chord(QUAVER, 2, 1, db3);
-
-	beep_chord(SEMIQUAVER*3, 2, 1, c3);
-	beep_chord(SEMIQUAVER, 2, 1, d3);
-	beep_chord(QUAVER, 2, 1, e3);
-	beep_chord(SEMIQUAVER, 2, 1, e4);
-	beep_chord(SEMIQUAVER, 2, 1, f4);
-	beep_chord(QUAVER, 2, 1, g4);
-	beep_chord(SEMIQUAVER, 2, 1, g4);
-	beep_chord(SEMIQUAVER, 2, 1, a4);
-	beep_chord(CROTCHET, 2, 1, g3);
-
-	beep_chord(QUAVER, 2, 1, f3);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(SEMIQUAVER, 2, 1, bb2);
-	beep_chord(QUAVER, 2, 1, bb2);
-	beep(CROTCHET, r);
-
-	beep(QUAVER, r);
-	beep_chord(SEMIQUAVER, 2, 1, a2);
-	beep_chord(SEMIQUAVER, 2, 1, a2);
-	beep_chord(QUAVER, 2, 1, a2);
-	beep_chord(SEMIQUAVER, 2, 1, a2);
-	beep_chord(SEMIQUAVER, 2, 1, a2);
-	beep_chord(QUAVER, 2, 1, a2);
-	beep(CROTCHET, r);
-
+	// 13
+	beep(QUAVER, 1, 		f3);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		a4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		a4);
+	rest(SEPARATION);
+	beep(QUAVER, 1, 		a4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		a4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		a4);
+	rest(SEPARATION);
+	beep(QUAVER, 1, 		a4);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		eb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		eb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		eb2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		f2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		g2);
+	rest(SEPARATION);
+	beep(SEMIQUAVER, 1, 		a2);
+	rest(SEPARATION);
+	goto loop;
 
 	geep_close();
 	exit(EXIT_SUCCESS);
