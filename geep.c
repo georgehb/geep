@@ -27,10 +27,12 @@ static void do_beep(int freq, int console_fd);
 
 static int console_fd = -1;
 static int quality;
+static uint64_t tot_length;
 
 int geep_setup(int sound_quality)
 {
 	quality = sound_quality;
+	tot_length = 0;
 	if ((console_fd = open("/dev/tty0", O_WRONLY | O_CLOEXEC)) == -1) {
 		console_fd = open("/dev/vc/0", O_WRONLY | O_CLOEXEC);
 	}
@@ -47,12 +49,12 @@ void geep_close()
 }
 
 void beep(uint64_t length, int num_notes, ...) {
-	struct timespec start;
+	static struct timespec start = { 0, 0 };
 	struct timespec time;
 	uint64_t diff;
 	va_list arg_ptr;
 	int periods[num_notes];
-	uint64_t sample = 0;
+	static uint64_t sample = 0;
 	int samples[num_notes];
 	uint64_t next_tick;
 	uint64_t overshoot = 0;
@@ -60,24 +62,27 @@ void beep(uint64_t length, int num_notes, ...) {
 	va_start(arg_ptr, num_notes);
 	for (int i = 0; i < num_notes; i++) {
 		periods[i] = CLOCK_TICK_RATE / va_arg(arg_ptr, int);
-		samples[i] = 1;
+		samples[i] = sample / periods[i] + 1;
 	}
 	va_end(arg_ptr);
 
-	clock_gettime(CLOCK_REALTIME, &start);
+	if (start.tv_sec == 0 && start.tv_nsec == 0) {
+		clock_gettime(CLOCK_REALTIME, &start);
+	}
 	clock_gettime(CLOCK_REALTIME, &time);
 	diff  = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
+	tot_length += length;
 
-	while (diff < length * CLOCK_TICK_RATE / 1000000000) {
+	while (diff < tot_length * CLOCK_TICK_RATE / 1000000000) {
 		next_tick = UINT64_MAX;
 		for (int i = 0; i < num_notes; i++) {
+			while (sample > periods[i] * samples[i]) {
+				samples[i]++;
+			}
 			next_tick = min(next_tick, periods[i] * samples[i]);
 		}
 		for (int i = 0; i < num_notes; i++) {
 			if (next_tick == periods[i] * samples[i]) {
-				samples[i]++;
-			}
-			while (sample > periods[i] * samples[i]) {
 				samples[i]++;
 			}
 		}
@@ -91,7 +96,7 @@ void beep(uint64_t length, int num_notes, ...) {
 			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
 		}
 		ioctl(console_fd, KIOCSOUND, 0);
-		while (diff < next_tick && diff < length * CLOCK_TICK_RATE / 1000000000) {
+		while (diff < next_tick && diff < tot_length * CLOCK_TICK_RATE / 1000000000) {
 			clock_gettime(CLOCK_REALTIME, &time);
 			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
 		}
@@ -110,6 +115,7 @@ void rest(uint64_t length)
 	clock_gettime(CLOCK_REALTIME, &start);
 	clock_gettime(CLOCK_REALTIME, &time);
 	diff  = time_diff(&time, &start);
+	tot_length += length;
 
 	while (diff < length) {
 		nanosleep(&sleep, NULL);

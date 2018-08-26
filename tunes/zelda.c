@@ -131,7 +131,7 @@ loop:
 	beep(SEMIQUAVER, 2, ab2, 	f5);
 	beep(SEMIQUAVER, 1, 	f5);
 	beep(SEMIQUAVER, 3, ab3, 	f5, 	bb5);
-	beep(SEMIQUAVER, 2, 	f5);
+	beep(SEMIQUAVER, 1, 	f5);
 	beep(SEMIQUAVER, 2, 	f5, 	bb5);
 	beep(SEMIQUAVER, 2, 	f5, 	c6);
 	beep(SEMIQUAVER, 3, ab3, 	f5, 	d6);
@@ -175,9 +175,9 @@ loop:
 	beep(SEMIQUAVER, 3, db4, 	f5, 	db6);
 	beep(SEMIQUAVER, 2,  	f5, 	eb6);
 	beep(SEMIQUAVER, 3, db3, 	f5, 	f6);
-	beep(SEMIQUAVER, 2,  	f5);
+	beep(SEMIQUAVER, 1,  	f5);
 	beep(SEMIQUAVER, 3, db4, 	f5, 	db6);
-	beep(SEMIQUAVER, 2, 	f5);
+	beep(SEMIQUAVER, 1, 	f5);
 	beep(SEMIQUAVER, 2,  	f5, 	ab5);
 	beep(SEMIQUAVER, 2,  	f5, 	ab5);
 	beep(SEMIQUAVER, 1, db4);

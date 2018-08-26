@@ -1,13 +1,17 @@
 #ifndef NOTES_H
 #define NOTES_H
 
+#ifndef BPM
+#define BPM 120
+#endif
+
 #define NANOSECONDS 1000000000lu
 #define CROTCHET (NANOSECONDS * 60lu / BPM)
 #define QUAVER (CROTCHET / 2)
 #define SEMIQUAVER (CROTCHET / 4)
 #define DEMISEMIQUAVER (CROTCHET / 8)
 #define SIXTH (CROTCHET / 6)
-#define SEPARATION (CROTCHET / 50)
+#define SEPARATION (CROTCHET / 25)
 
 static const int c0=16;
 static const int cs0=17;

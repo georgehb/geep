@@ -18,7 +18,7 @@ void quit(int sig)
 
 int main()
 {
-    console_fd = geep_setup(180);
+    console_fd = geep_setup(120);
     signal(SIGINT, quit);
 
     // bar 65 (upbeat)
