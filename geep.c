@@ -48,6 +48,37 @@ void geep_close()
 	close(console_fd);
 }
 
+void noise(uint64_t length) {
+	struct timespec start;
+	struct timespec time;
+	uint64_t diff;
+	uint64_t sample = 0;
+	uint64_t next_tick;
+
+	clock_gettime(CLOCK_REALTIME, &start);
+	clock_gettime(CLOCK_REALTIME, &time);
+	diff  = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
+
+	while (diff < length * CLOCK_TICK_RATE / 1000000000) {
+		next_tick = sample + rand() % 1000 + 1000;
+		/* 
+		 * The following two magic numbers are just that - they sound
+		 * good on George's machine, who knows why.
+		 */
+		ioctl(console_fd, KIOCSOUND, 40000);
+		while (diff < sample + quality) {
+			clock_gettime(CLOCK_REALTIME, &time);
+			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
+		}
+		ioctl(console_fd, KIOCSOUND, 0);
+		while (diff < next_tick && diff < tot_length * CLOCK_TICK_RATE / 1000000000) {
+			clock_gettime(CLOCK_REALTIME, &time);
+			diff = time_diff(&time, &start) * CLOCK_TICK_RATE / 1000000000;
+		}
+		sample = next_tick;
+	}
+}
+
 void beep(uint64_t length, int num_notes, ...) {
 	static struct timespec start = { 0, 0 };
 	struct timespec time;

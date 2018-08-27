@@ -19,6 +19,7 @@
 int geep_setup(int sound_quality);
 void geep_close();
 void beep(uint64_t length, int num_notes, ...);
+void noise(uint64_t length);
 void rest(uint64_t length);
 
 #endif /* GEEP_H */
