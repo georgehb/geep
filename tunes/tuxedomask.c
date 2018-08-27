@@ -21,6 +21,7 @@ int main()
     console_fd = geep_setup(120);
     signal(SIGINT, quit);
 
+    
     // bar 65 (upbeat)
     beep(QUAVER, 2, 1, g3);
     rest(SEPARATION);
@@ -274,6 +275,8 @@ int main()
     beep(QUAVER, 1, bb5);
     rest(SEPARATION);
     beep(QUAVER, 1, c6);
+    rest(CROTCHET);
+    beep(CROTCHET*3, 4, eb1, eb2, g3, c4, eb4, g4);
 
 
 

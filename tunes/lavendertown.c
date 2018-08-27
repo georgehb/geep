@@ -1,5 +1,4 @@
 #define BPM 120
-#define QUALITY 1 
 
 #include "notes.h"
 #include "../geep.h"
@@ -22,17 +21,6 @@ int main()
 	console_fd = geep_setup(100);
 	signal(SIGINT, quit);
 	
-/*	
-120 
-
-c3*1 g3*1 b3*1 f#3*1    c3*1 g3*1 b3*1 f#3*1    c3*1 g3*1 b3*1 f#3*1    c3*1 g3*1 b3*1 f#3*1
-
-% bar 5 start of repeat
-g3*2 g3*2     f#3*2 f#3*2    g3*1 f#3*1 e3*1 b3*1       e3*1 c3*1 b2*1 e3*1
-
-% bar 9
-g3*2 g3*2     f#3*2 f#3*2    g3*1 f#3*1 e3*1 b3*1       e3*1 c3*1 b2*1 e3*1
-*/
 	// 1
 	beep(QUAVER, 1, 		c6);
 	rest(QUAVER);

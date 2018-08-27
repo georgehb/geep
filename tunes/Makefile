@@ -3,14 +3,20 @@ FLAGS=-Wall -O3 -ffast-math
 COMMON_DEPS=../libgeep.a notes.h ../geep.h
 
 .PHONY : all
-all : lavendertown sailormoon tuxedomask wildpokemonbattle zelda
+all : lavendertown turnaboutsisters pursuitcornered sailormoon tuxedomask wildpokemonbattle zelda
 
 default : all
 
 lavendertown : lavendertown.c ${COMMON_DEPS}
 	${CC} ${FLAGS} -o $@ $^
 
+pursuitcornered : pursuitcornered.c ${COMMON_DEPS}
+	${CC} ${FLAGS} -o $@ $^
+
 sailormoon : sailormoon.c ${COMMON_DEPS}
+	${CC} ${FLAGS} -o $@ $^
+
+turnaboutsisters : turnaboutsisters.c ${COMMON_DEPS}
 	${CC} ${FLAGS} -o $@ $^
 
 tuxedomask : tuxedomask.c ${COMMON_DEPS}
