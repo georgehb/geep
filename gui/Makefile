@@ -7,11 +7,11 @@ all : geepui
 
 default : all
 
-% : %.o
+geepui : geepui.o
 	${CC} ${CFLAGS} -o $@ $^ ${LDFLAGS}
 
 %.o : %.c notes.h
 	${CC} ${CFLAGS} -c -o $@ $<
 
 clean :
-	rm -f *.o
+	rm -f geepui *.o

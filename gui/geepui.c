@@ -3,27 +3,42 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define ROWS 30
+#define ROWS 20
 #define COLUMNS 20
 #define BUTTONS (ROWS * COLUMNS)
 #define MAX_BEATS UINT32_MAX
 #define KEY_WIDTH 3
 
 struct note {
-	unsigned int beat;
+	unsigned int note;
 	struct note *next;
 };
 
-struct note *add_note(struct note **head, unsigned int beat)
+struct beat {
+	unsigned int beat;
+	struct note *note_list;
+	struct beat *next;
+};
+
+struct note_grid {
+	GtkWidget *buttons[BUTTONS];
+	GtkWidget *keyboard;
+	GtkWidget *beat_bar;
+	struct beat *beats;
+	unsigned int note_offset;
+	unsigned int beat_offset;
+};
+
+struct note *add_note(struct note **head, unsigned int value)
 {
 	struct note *note = malloc(sizeof(struct note));
-	note->beat = beat;
+	note->note = value;
 	note->next = NULL;
 	if (!(*head)) {
 		*head = note;
 		return note;
 	}
-	while ((*head)->next && (*head)->next->beat < beat) {
+	while ((*head)->next && (*head)->next->note < value) {
 		head = &(*head)->next;
 	}
 	note->next = (*head)->next;
@@ -31,9 +46,27 @@ struct note *add_note(struct note **head, unsigned int beat)
 	return note;
 }
 
-void remove_note(struct note **head, unsigned int beat)
+struct beat *add_beat(struct beat **head, unsigned int value)
 {
-	while ((*head)->beat != beat) {
+	struct beat *beat = malloc(sizeof(struct beat));
+	beat->beat = value;
+	beat->note_list = NULL;
+	beat->next = NULL;
+	if (!(*head)) {
+		*head = beat;
+		return beat;
+	}
+	while ((*head)->next && (*head)->next->beat < value) {
+		head = &(*head)->next;
+	}
+	beat->next = (*head)->next;
+	(*head)->next = beat;
+	return beat;
+}
+
+void remove_note(struct note **head, unsigned int value)
+{
+	while ((*head)->note != value) {
 		head = &(*head)->next;
 	}
 	struct note *tmp = *head;
@@ -41,32 +74,68 @@ void remove_note(struct note **head, unsigned int beat)
 	free(tmp);
 }
 
-bool contains_note(struct note *head, unsigned int beat)
+void remove_beat(struct beat **head, unsigned int value)
 {
-	while (head && head->beat != beat) {
+	while ((*head)->beat != value) {
+		head = &(*head)->next;
+	}
+	struct beat *tmp = *head;
+	*head = (*head)->next;
+	free(tmp);
+}
+
+struct note *get_note(struct note *head, unsigned int value)
+{
+	while (head && head->note != value) {
 		head = head->next;
 	}
-	return (head != NULL);
+	return head;
 }
 
-void toggle_note(struct note **head, unsigned int beat)
+bool contains_note(struct note *head, unsigned int value)
 {
-	if (contains_note(*head, beat)) {
-		remove_note(head, beat);
-		g_print("removed %d\n", beat);
+	return (get_note(head, value) != NULL);
+}
+
+struct beat *get_beat(struct beat *head, unsigned int value)
+{
+	while (head && head->beat != value) {
+		head = head->next;
+	}
+	return head;
+}
+
+bool contains_beat(struct beat *head, unsigned int value)
+{
+	return (get_beat(head, value) != NULL);
+}
+
+bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat)
+{
+	struct beat *b = get_beat(grid->beats, beat);
+	if (b) {
+		return contains_note(b->note_list, note);
+	}
+	return false;
+}
+
+void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
+{
+	struct beat *b = get_beat(grid->beats, beat);
+	if (b) {
+		if (contains_note(b->note_list, note)) {
+			remove_note(&b->note_list, note);
+			//g_print("Removed %d:%s\n", beat, note_names[note]);
+		} else {
+			add_note(&b->note_list, note);
+			//g_print("Added %d:%s\n", beat, note_names[note]);
+		}
 	} else {
-		add_note(head, beat);
-		g_print("added %d\n", beat);
+		b = add_beat(&grid->beats, beat);
+		add_note(&b->note_list, note);
+		//g_print("Added %d:%s\n", beat, note_names[note]);
 	}
 }
-
-struct note_grid {
-	GtkWidget *buttons[BUTTONS];
-	GtkWidget *keyboard;
-	struct note *notes[NUM_NOTES];
-	unsigned int note_offset;
-	unsigned int beat_offset;
-};
 
 static void note_button(GtkWidget *button, gpointer data)
 {
@@ -77,7 +146,7 @@ static void note_button(GtkWidget *button, gpointer data)
 			if (button == grid->buttons[idx]) {
 				unsigned int note = grid->note_offset + i;
 				unsigned int beat = grid->beat_offset + j;
-				toggle_note(&grid->notes[note], beat);
+				toggle_note(grid, note, beat);
 			}
 		}
 	}
@@ -92,7 +161,7 @@ static void update_grid(struct note_grid *grid)
 			unsigned int beat = grid->beat_offset + j;
 			gtk_toggle_button_set_active(
 					GTK_TOGGLE_BUTTON(grid->buttons[idx]),
-					contains_note(grid->notes[note], beat)
+					contains_note_beat(grid, note, beat)
 					);
 		}
 	}
@@ -131,6 +200,7 @@ static void scroll(GtkWidget *widget, GdkEventScroll *event, gpointer data)
 			break;
 	}
 	gtk_widget_queue_draw(note_grid->keyboard);
+	gtk_widget_queue_draw(note_grid->beat_bar);
 }
 
 gboolean draw_keyboard(GtkWidget *widget, cairo_t *cr, gpointer data)
@@ -219,9 +289,67 @@ gboolean draw_keyboard(GtkWidget *widget, cairo_t *cr, gpointer data)
 	return FALSE;
 }
 
+gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+	guint width;
+	guint height;
+	guint button_width;
+	GdkRGBA color;
+	GtkStyleContext *context;
+	struct note_grid *grid = (struct note_grid *)data;
+
+	context = gtk_widget_get_style_context(widget);
+
+	width = gtk_widget_get_allocated_width(widget);
+	height = gtk_widget_get_allocated_height(widget);
+	button_width = gtk_widget_get_allocated_width(grid->buttons[0]);
+
+	gtk_render_background(context, cr, 0, 0, width, height);
+	
+	/* Then render the black keys on top */
+	for (int i = 0; i < COLUMNS; i++) {
+		cairo_rectangle(cr, i * button_width, 0,
+				button_width-1, height);
+	}
+	color = (GdkRGBA){1.0, 1.0, 1.0, 1.0};
+	gdk_cairo_set_source_rgba(cr, &color);
+	cairo_fill(cr);
+	
+	/* And finally the labels */
+	color = (GdkRGBA){0.0, 0.0, 0.0, 1.0};
+	gdk_cairo_set_source_rgba(cr, &color);
+	for (int i = 0; i < COLUMNS; i++) {
+		cairo_move_to(cr,  (i + 0.5) * button_width, 0.5 * height);
+		char beat_str[20];
+		snprintf(beat_str, 20, "%d", grid->beat_offset + i);
+		cairo_show_text(cr, beat_str);
+	}
+
+	return FALSE;
+}
+
+static void export(GtkWidget *widget, gpointer data)
+{
+	(void) widget;
+	struct note_grid *grid = (struct note_grid *)data;
+	struct beat *beat = grid->beats;
+	struct note *note;
+	while (beat) {
+		g_print("Beat %d:\n", beat->beat);
+		note = beat->note_list;
+		while (note) {
+			g_print("\t%s\n", note_names[note->note]);
+			note = note->next;
+		}
+		beat = beat->next;
+	}
+}
+
 int main(int argc, char *argv[]) 
 { 
-	GtkWidget *window, *grid; 
+	GtkWidget *window;
+	GtkWidget *grid; 
+	GtkWidget *export_button; 
 	struct note_grid note_grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 };
 	gtk_init(&argc, &argv); 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
@@ -245,14 +373,24 @@ int main(int argc, char *argv[])
 
 	/* Create the lhs keyboard and attach it */
 	note_grid.keyboard = gtk_drawing_area_new();
-
 	g_signal_connect(note_grid.keyboard, "draw",
 			G_CALLBACK(draw_keyboard), &note_grid);
 	for (int i = 0; i < KEY_WIDTH; i++) {
 		gtk_grid_insert_column(GTK_GRID(grid), 0);
 	}
 	gtk_grid_attach(GTK_GRID(grid), note_grid.keyboard, 0, 0, KEY_WIDTH, ROWS);
-	gtk_grid_attach(GTK_GRID(grid), gtk_button_new_with_label("Export"), 0, ROWS, COLUMNS + KEY_WIDTH, 1);
+	
+	/* Create the top beat bar and attach it */
+	note_grid.beat_bar = gtk_drawing_area_new();
+	g_signal_connect(note_grid.beat_bar, "draw",
+			G_CALLBACK(draw_beat_bar), &note_grid);
+	gtk_grid_insert_row(GTK_GRID(grid), 0);
+	gtk_grid_attach(GTK_GRID(grid), note_grid.beat_bar, KEY_WIDTH, 0, COLUMNS, 1);
+
+	export_button = gtk_button_new_with_label("Export");
+	g_signal_connect(export_button, "pressed",
+			G_CALLBACK(export), &note_grid);
+	gtk_grid_attach(GTK_GRID(grid), export_button, 0, ROWS + 1, COLUMNS + KEY_WIDTH, 1);
 
 	gtk_container_add(GTK_CONTAINER(window), grid); 
 	gtk_widget_show_all(window); 
