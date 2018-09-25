@@ -7,7 +7,7 @@ all : geepui
 
 default : all
 
-geepui : geepui.o
+geepui : geepui.o drawing.o note_grid.o
 	${CC} ${CFLAGS} -o $@ $^ ${LDFLAGS}
 
 %.o : %.c notes.h
