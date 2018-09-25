@@ -1,4 +1,5 @@
 #include "notes.h"
+#include "preamble.h"
 #include <gtk/gtk.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -41,8 +42,13 @@ struct note *add_note(struct note **head, unsigned int value)
 	while ((*head)->next && (*head)->next->note < value) {
 		head = &(*head)->next;
 	}
-	note->next = (*head)->next;
-	(*head)->next = note;
+	if ((*head)->note < value) {
+		note->next = (*head)->next;
+		(*head)->next = note;
+	} else {
+		note->next = *head;
+		*head = note;
+	}
 	return note;
 }
 
@@ -59,8 +65,13 @@ struct beat *add_beat(struct beat **head, unsigned int value)
 	while ((*head)->next && (*head)->next->beat < value) {
 		head = &(*head)->next;
 	}
-	beat->next = (*head)->next;
-	(*head)->next = beat;
+	if ((*head)->beat < value) {
+		beat->next = (*head)->next;
+		(*head)->next = beat;
+	} else {
+		beat->next = *head;
+		*head = beat;
+	}
 	return beat;
 }
 
@@ -97,6 +108,16 @@ bool contains_note(struct note *head, unsigned int value)
 	return (get_note(head, value) != NULL);
 }
 
+unsigned int num_notes(struct note *head)
+{
+	unsigned int n = 0;
+	while (head) {
+		n++;
+		head = head->next;
+	}
+	return n;
+}
+
 struct beat *get_beat(struct beat *head, unsigned int value)
 {
 	while (head && head->beat != value) {
@@ -125,6 +146,9 @@ void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
 	if (b) {
 		if (contains_note(b->note_list, note)) {
 			remove_note(&b->note_list, note);
+			if (!b->note_list) {
+				remove_beat(&grid->beats, beat);
+			}
 			//g_print("Removed %d:%s\n", beat, note_names[note]);
 		} else {
 			add_note(&b->note_list, note);
@@ -316,11 +340,13 @@ gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
 	cairo_fill(cr);
 	
 	/* And finally the labels */
+	/* Label string only needs to go up to 11 to hold all possible uint32
+	 * values, but better to be safe */
+	char beat_str[20];
 	color = (GdkRGBA){0.0, 0.0, 0.0, 1.0};
 	gdk_cairo_set_source_rgba(cr, &color);
 	for (int i = 0; i < COLUMNS; i++) {
 		cairo_move_to(cr,  (i + 0.5) * button_width, 0.5 * height);
-		char beat_str[20];
 		snprintf(beat_str, 20, "%d", grid->beat_offset + i);
 		cairo_show_text(cr, beat_str);
 	}
@@ -334,15 +360,33 @@ static void export(GtkWidget *widget, gpointer data)
 	struct note_grid *grid = (struct note_grid *)data;
 	struct beat *beat = grid->beats;
 	struct note *note;
-	while (beat) {
-		g_print("Beat %d:\n", beat->beat);
+	if (!beat) {
+		return;
+	}
+	unsigned int max_beat = beat->beat;
+	printf("%s", preamble);
+	{
+		struct beat *head = grid->beats;
+		while (head) {
+			max_beat = head->beat;
+			head = head->next;
+		}
+	}
+	for (unsigned int i = 0; (i <= max_beat) && beat; i++) {
+		if (i < beat->beat) {
+			printf("\trest(SEMIQUAVER);\n");
+			continue;
+		}
 		note = beat->note_list;
-		while (note) {
-			g_print("\t%s\n", note_names[note->note]);
+		printf("\tbeep(SEMIQUAVER, %d, ", num_notes(note));
+		while (note->next) {
+			printf("%s, ", note_names[note->note]);
 			note = note->next;
 		}
+		printf("%s);\n", note_names[note->note]);
 		beat = beat->next;
 	}
+	printf("%s", end_string);
 }
 
 int main(int argc, char *argv[]) 
