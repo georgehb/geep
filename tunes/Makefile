@@ -1,32 +1,15 @@
 CC=gcc
 FLAGS=-Wall -O3 -ffast-math
-COMMON_DEPS=../libgeep.a notes.h ../geep.h
+COMMON_DEPS=../libgeep.a notes.h ../geep.h Makefile
+BUILD_DEPS=../libgeep.a
 
 .PHONY : all
 all : lavendertown turnaboutsisters pursuitcornered sailormoon tuxedomask wildpokemonbattle zelda
 
 default : all
 
-lavendertown : lavendertown.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
-
-pursuitcornered : pursuitcornered.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
-
-sailormoon : sailormoon.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
-
-turnaboutsisters : turnaboutsisters.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
-
-tuxedomask : tuxedomask.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
-
-wildpokemonbattle : wildpokemonbattle.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
-
-zelda : zelda.c ${COMMON_DEPS}
-	${CC} ${FLAGS} -o $@ $^
+% : %.c ${COMMON_DEPS}
+	${CC} ${FLAGS} -o $@ $< ${BUILD_DEPS}
 
 clean :
 	rm -f *.o

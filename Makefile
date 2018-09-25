@@ -3,12 +3,16 @@ FLAGS=-Wall -O3 -ffast-math
 COMMON_DEPS=libgeep.a tunes/notes.h geep.h
 
 .PHONY : all
-all : libgeep.a tunes
+all : libgeep.a tunes gui
 
 default : all
 
 .PHONY : tunes
 tunes : libgeep.a
+	$(MAKE) -C $@
+
+.PHONY : gui
+gui : 
 	$(MAKE) -C $@
 
 libgeep.a : geep.o
