@@ -7,7 +7,6 @@ static void remove_beat(struct beat **head, unsigned int value);
 static struct note *get_note(struct note *head, unsigned int value);
 static struct beat *get_beat(struct beat *head, unsigned int value);
 static bool contains_note(struct note *head, unsigned int value);
-//static bool contains_beat(struct beat *head, unsigned int value);
 
 struct note *add_note(struct note **head, unsigned int value)
 {
@@ -104,11 +103,6 @@ struct beat *get_beat(struct beat *head, unsigned int value)
 	}
 	return head;
 }
-
-/*bool contains_beat(struct beat *head, unsigned int value)
-{
-	return (get_beat(head, value) != NULL);
-}*/
 
 bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat)
 {

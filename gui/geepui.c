@@ -81,34 +81,52 @@ static void export(GtkWidget *widget, gpointer data)
 	struct note_grid *grid = (struct note_grid *)data;
 	struct beat *beat = grid->beats;
 	struct note *note;
+	GtkWidget *dialog;
+	gint res;
 	if (!beat) {
 		return;
 	}
-	unsigned int max_beat = beat->beat;
-	printf("#define BPM %s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
-	printf("%s", preamble);
-	{
-		struct beat *head = grid->beats;
-		while (head) {
-			max_beat = head->beat;
-			head = head->next;
+	dialog = gtk_file_chooser_dialog_new ("Export File",
+                                      NULL,
+                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+                                      "Cancel",
+                                      GTK_RESPONSE_CANCEL,
+                                      "Save",
+                                      GTK_RESPONSE_ACCEPT,
+                                      NULL);
+	res = gtk_dialog_run(GTK_DIALOG(dialog));
+	if (res == GTK_RESPONSE_ACCEPT) {
+		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		FILE *file = fopen(filename, "we");
+		unsigned int max_beat = beat->beat;
+		fprintf(file, "#define BPM %s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
+		fprintf(file, "%s", preamble);
+		{
+			struct beat *head = grid->beats;
+			while (head) {
+				max_beat = head->beat;
+				head = head->next;
+			}
 		}
+		for (unsigned int i = 0; (i <= max_beat) && beat; i++) {
+			if (i < beat->beat) {
+				fprintf(file, "\trest(SEMIQUAVER);\n");
+				continue;
+			}
+			note = beat->note_list;
+			fprintf(file, "\tbeep(SEMIQUAVER, %d, ", num_notes(note));
+			while (note->next) {
+				fprintf(file, "%s, ", note_names[note->note]);
+				note = note->next;
+			}
+			fprintf(file, "%s);\n", note_names[note->note]);
+			beat = beat->next;
+		}
+		fprintf(file, "%s", end_string);
+		g_free(filename);
+		fclose(file);
 	}
-	for (unsigned int i = 0; (i <= max_beat) && beat; i++) {
-		if (i < beat->beat) {
-			printf("\trest(SEMIQUAVER);\n");
-			continue;
-		}
-		note = beat->note_list;
-		printf("\tbeep(SEMIQUAVER, %d, ", num_notes(note));
-		while (note->next) {
-			printf("%s, ", note_names[note->note]);
-			note = note->next;
-		}
-		printf("%s);\n", note_names[note->note]);
-		beat = beat->next;
-	}
-	printf("%s", end_string);
+	gtk_widget_destroy(dialog);
 }
 
 static void save(GtkWidget *widget, gpointer data)
@@ -117,40 +135,68 @@ static void save(GtkWidget *widget, gpointer data)
 	struct note_grid *grid = (struct note_grid *)data;
 	struct beat *beat = grid->beats;
 	struct note *note;
+	GtkWidget *dialog;
+	gint res;
 	if (!beat) {
 		return;
 	}
-	printf("%s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
-	while (beat) {
-		note = beat->note_list;
-		printf("%d ", beat->beat);
-		while (note->next) {
-			printf("%d,", note->note);
-			note = note->next;
+
+	dialog = gtk_file_chooser_dialog_new ("Save File",
+                                      NULL,
+                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+                                      "Cancel",
+                                      GTK_RESPONSE_CANCEL,
+                                      "Save",
+                                      GTK_RESPONSE_ACCEPT,
+                                      NULL);
+	res = gtk_dialog_run(GTK_DIALOG(dialog));
+	if (res == GTK_RESPONSE_ACCEPT) {
+		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		FILE *file = fopen(filename, "we");
+		fprintf(file, "%s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
+		while (beat) {
+			note = beat->note_list;
+			fprintf(file, "%d ", beat->beat);
+			while (note->next) {
+				fprintf(file, "%d,", note->note);
+				note = note->next;
+			}
+			fprintf(file, "%d\n", note->note);
+			beat = beat->next;
 		}
-		printf("%d\n", note->note);
-		beat = beat->next;
+		g_free(filename);
+		fclose(file);
 	}
+	gtk_widget_destroy(dialog);
 }
 
 int main(int argc, char *argv[]) 
 { 
-	GtkWidget *window;
-	GtkWidget *grid; 
-	GtkWidget *save_button; 
-	GtkWidget *export_button; 
-	GtkWidget *menu_bar;
+	GtkBuilder *builder;
+	GObject *window;
+	GObject *grid; 
+	GObject *save_button; 
+	GObject *export_button; 
+	GError *error = NULL;
 	struct note_grid note_grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 };
 	gtk_init(&argc, &argv); 
-	window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
-	gtk_widget_add_events(window, GDK_SCROLL_MASK);
+
+	/* Load the UI description */
+	builder = gtk_builder_new ();
+	if (gtk_builder_add_from_file (builder, "geepui.ui", &error) == 0)
+	{
+		g_printerr ("Error loading file: %s\n", error->message);
+		g_clear_error (&error);
+		return 1;
+	}
+
+	window = gtk_builder_get_object(builder, "window");
+	gtk_widget_add_events(GTK_WIDGET(window), GDK_SCROLL_MASK);
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(window, "scroll-event", G_CALLBACK(scroll), &note_grid);
 
 	/* Generate main note button grid */
-	grid = gtk_grid_new();
-	gtk_grid_set_row_homogeneous(GTK_GRID(grid), true);
-	gtk_grid_set_column_homogeneous(GTK_GRID(grid), true);
+	grid = gtk_builder_get_object(builder, "note_grid");
 	for (int i = 0; i < ROWS; i++) {
 		for (int j = 0; j < COLUMNS; j++) {
 			int idx = i * COLUMNS + j;
@@ -179,26 +225,12 @@ int main(int argc, char *argv[])
 	gtk_grid_attach(GTK_GRID(grid), note_grid.beat_bar, KEY_WIDTH, 0, COLUMNS, 1);
 	
 	/* Save button */
-	save_button = gtk_button_new_with_label("Save");
-	g_signal_connect(save_button, "pressed",
-			G_CALLBACK(save), &note_grid);
-	gtk_grid_attach(GTK_GRID(grid), save_button, 0, ROWS + 1, COLUMNS + KEY_WIDTH - (COLUMNS + KEY_WIDTH) / 2, 1);
+	save_button = gtk_builder_get_object(builder, "save");
+	g_signal_connect(save_button, "activate", G_CALLBACK(save), &note_grid);
 
 	/* Export button */
-	export_button = gtk_button_new_with_label("Export");
-	g_signal_connect(export_button, "pressed",
-			G_CALLBACK(export), &note_grid);
-	gtk_grid_attach(GTK_GRID(grid), export_button, COLUMNS + KEY_WIDTH - (COLUMNS + KEY_WIDTH) / 2, ROWS + 1, (COLUMNS + KEY_WIDTH) / 2, 1);
-		
-	/* Menu bar */
-	menu_bar = gtk_menu_bar_new();
-	{
-		GtkWidget *menu_item = gtk_menu_item_new_with_label("File");
-		GtkWidget *submenu = gtk_menu_new();
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_item), submenu);
-		gtk_container_add(GTK_CONTAINER(menu_bar), menu_item);
-	}
-
+	export_button = gtk_builder_get_object(builder, "export");
+	g_signal_connect(export_button, "activate", G_CALLBACK(export), &note_grid);
 
 	/* BPM entry */
 	{
@@ -210,13 +242,7 @@ int main(int argc, char *argv[])
 	gtk_entry_set_width_chars(GTK_ENTRY(note_grid.bpm), 3);
 	gtk_grid_attach(GTK_GRID(grid), note_grid.bpm, 1, 0, KEY_WIDTH - 1, 1);
 
-	{
-		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-		gtk_container_add(GTK_CONTAINER(window), box); 
-		gtk_box_pack_start(GTK_BOX(box), menu_bar, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(box), grid, true, true, 0);
-	}
-	gtk_widget_show_all(window); 
+	gtk_widget_show_all(GTK_WIDGET(window)); 
 	gtk_main(); 
 	return 0; 
 }
