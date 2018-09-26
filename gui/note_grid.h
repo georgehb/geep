@@ -34,5 +34,6 @@ unsigned int num_notes(struct note *head);
 bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat);
 
 void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat);
+void note_grid_clear(struct note_grid *grid);
 
 #endif /* NOTE_GRID_H */

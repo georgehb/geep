@@ -130,3 +130,23 @@ void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
 		add_note(&b->note_list, note);
 	}
 }
+
+void note_grid_clear(struct note_grid *grid)
+{
+	struct beat *beat = grid->beats;
+	struct note *note;
+	void *tmp;
+
+	while (beat) {
+		note = beat->note_list;
+		while (note) {
+			tmp = (void *)note;
+			note = note->next;
+			free(tmp);
+		}
+		tmp = (void *)beat;
+		beat = beat->next;
+		free(tmp);
+	}
+	grid->beats = NULL;
+}

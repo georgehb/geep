@@ -5,8 +5,11 @@
 #include <gtk/gtk.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_BEATS UINT32_MAX
+#define MAX_LINE 512 /* Maximum line length to read */
 #define KEY_WIDTH 3
 
 static void note_button(GtkWidget *button, gpointer data)
@@ -170,6 +173,45 @@ static void save(GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(dialog);
 }
 
+static void load(GtkWidget *widget, gpointer data)
+{
+	(void) widget;
+	struct note_grid *grid = (struct note_grid *)data;
+	int note;
+	int beat;
+	GtkWidget *dialog;
+	gint res;
+
+	dialog = gtk_file_chooser_dialog_new ("Load File",
+                                      NULL,
+                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+                                      "Cancel",
+                                      GTK_RESPONSE_CANCEL,
+                                      "Load",
+                                      GTK_RESPONSE_ACCEPT,
+                                      NULL);
+	res = gtk_dialog_run(GTK_DIALOG(dialog));
+	if (res == GTK_RESPONSE_ACCEPT) {
+		note_grid_clear(grid);
+		char line[MAX_LINE];
+		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		FILE *file = fopen(filename, "re");
+		fgets(line, MAX_LINE, file);
+		sprintf(line, "%ld", strtol(line, NULL, 10));
+		gtk_entry_set_text(GTK_ENTRY(grid->bpm), line);
+		while (fgets(line, MAX_LINE, file)) {
+			char *cursor;
+			beat = strtol(line, &cursor, 10);
+			while ((note = strtol(cursor, &cursor, 10))) {
+				toggle_note(grid, note, beat);
+			}
+		}
+		g_free(filename);
+		fclose(file);
+	}
+	gtk_widget_destroy(dialog);
+}
+
 int main(int argc, char *argv[]) 
 { 
 	GtkBuilder *builder;
@@ -177,6 +219,7 @@ int main(int argc, char *argv[])
 	GObject *grid; 
 	GObject *save_button; 
 	GObject *export_button; 
+	GObject *load_button; 
 	GError *error = NULL;
 	struct note_grid note_grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 };
 	gtk_init(&argc, &argv); 
@@ -231,6 +274,10 @@ int main(int argc, char *argv[])
 	/* Export button */
 	export_button = gtk_builder_get_object(builder, "export");
 	g_signal_connect(export_button, "activate", G_CALLBACK(export), &note_grid);
+
+	/* Export button */
+	load_button = gtk_builder_get_object(builder, "load");
+	g_signal_connect(load_button, "activate", G_CALLBACK(load), &note_grid);
 
 	/* BPM entry */
 	{
