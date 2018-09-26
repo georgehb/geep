@@ -100,7 +100,26 @@ static void export(GtkWidget *widget, gpointer data)
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		FILE *file = fopen(filename, "we");
+		FILE *file;
+		
+		file = fopen(filename, "re");
+		if (file) {
+			fclose(file);
+			GtkWidget *confirm = gtk_message_dialog_new(NULL,
+					GTK_DIALOG_MODAL,
+					GTK_MESSAGE_QUESTION,
+					GTK_BUTTONS_YES_NO,
+					"File \"%s\" already exists, do you want to overwrite it?",
+					filename);
+			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
+				g_free(filename);
+				gtk_widget_destroy(confirm);
+				gtk_widget_destroy(dialog);
+				return;
+			}
+		}
+
+		file = fopen(filename, "we");
 		unsigned int max_beat = beat->beat;
 		fprintf(file, "#define BPM %s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
 		fprintf(file, "%s", preamble);
@@ -155,7 +174,26 @@ static void save(GtkWidget *widget, gpointer data)
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		FILE *file = fopen(filename, "we");
+		FILE *file;
+		
+		file = fopen(filename, "re");
+		if (file) {
+			fclose(file);
+			GtkWidget *confirm = gtk_message_dialog_new(NULL,
+					GTK_DIALOG_MODAL,
+					GTK_MESSAGE_QUESTION,
+					GTK_BUTTONS_YES_NO,
+					"File \"%s\" already exists, do you want to overwrite it?",
+					filename);
+			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
+				g_free(filename);
+				gtk_widget_destroy(confirm);
+				gtk_widget_destroy(dialog);
+				return;
+			}
+		}
+
+		file = fopen(filename, "we");
 		fprintf(file, "%s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
 		while (beat) {
 			note = beat->note_list;
@@ -210,6 +248,7 @@ static void load(GtkWidget *widget, gpointer data)
 		fclose(file);
 	}
 	gtk_widget_destroy(dialog);
+	update_grid(grid);
 }
 
 int main(int argc, char *argv[]) 
