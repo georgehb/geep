@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 #include <stdbool.h>
+#include "drawing.h"
+#include "notes.h"
 
 #define ROWS 20
 #define COLUMNS 20
@@ -10,6 +12,7 @@
 
 struct note {
 	unsigned int note;
+	enum note_state state;
 	struct note *next;
 };
 
@@ -20,7 +23,7 @@ struct beat {
 };
 
 struct note_grid {
-	GtkWidget *buttons[BUTTONS];
+	struct note_button buttons[BUTTONS];
 	GtkWidget *keyboard;
 	GtkWidget *beat_bar;
 	GtkWidget *bpm;
@@ -32,6 +35,7 @@ struct note_grid {
 
 unsigned int num_notes(struct note *head);
 bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat);
+struct note *get_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat);
 
 void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat);
 void note_grid_clear(struct note_grid *grid);

@@ -2,6 +2,7 @@
 #include "note_grid.h"
 #include "notes.h"
 #include "preamble.h"
+#include <errno.h>
 #include <gtk/gtk.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -12,33 +13,27 @@
 #define MAX_LINE 512 /* Maximum line length to read */
 #define KEY_WIDTH 3
 
-static void note_button(GtkWidget *button, gpointer data)
+struct application_state {
+	struct note_grid grid;
+	GtkBuilder *builder;
+};
+
+static void note_button(GtkWidget *widget, GdkEvent *event, gpointer data)
 {
-	struct note_grid *grid = (struct note_grid *)data;
-	for (int i = 0; i < ROWS; i++) {
-		for (int j = 0; j < COLUMNS; j++) {
-			int idx = i * COLUMNS + j;
-			if (button == grid->buttons[idx]) {
-				unsigned int note = grid->note_offset + i;
-				unsigned int beat = grid->beat_offset + j;
-				toggle_note(grid, note, beat);
-			}
-		}
+	if (event->type != GDK_BUTTON_PRESS) {
+		return;
 	}
+	struct note_button *button = (struct note_button *)data;
+	unsigned int note = button->grid->note_offset + button->y;
+	unsigned int beat = button->grid->beat_offset + button->x;
+	toggle_note(button->grid, note, beat);
+	gtk_widget_queue_draw(widget);
 }
 
 static void update_grid(struct note_grid *grid)
 {
-	for (int i = 0; i < ROWS; i++) {
-		for (int j = 0; j < COLUMNS; j++) {
-			int idx = i * COLUMNS + j;
-			unsigned int note = grid->note_offset + i;
-			unsigned int beat = grid->beat_offset + j;
-			gtk_toggle_button_set_active(
-					GTK_TOGGLE_BUTTON(grid->buttons[idx]),
-					contains_note_beat(grid, note, beat)
-					);
-		}
+	for (int i = 0; i < BUTTONS; i++) {
+		gtk_widget_queue_draw(grid->buttons[i].widget);
 	}
 }
 
@@ -81,50 +76,26 @@ static void scroll(GtkWidget *widget, GdkEventScroll *event, gpointer data)
 static void export(GtkWidget *widget, gpointer data)
 {
 	(void) widget;
-	struct note_grid *grid = (struct note_grid *)data;
-	struct beat *beat = grid->beats;
+	struct application_state *state = (struct application_state *)data;
+	struct beat *beat = state->grid.beats;
 	struct note *note;
-	GtkWidget *dialog;
+	GObject *dialog;
 	gint res;
 	if (!beat) {
 		return;
 	}
-	dialog = gtk_file_chooser_dialog_new ("Export File",
-                                      NULL,
-                                      GTK_FILE_CHOOSER_ACTION_SAVE,
-                                      "Cancel",
-                                      GTK_RESPONSE_CANCEL,
-                                      "Save",
-                                      GTK_RESPONSE_ACCEPT,
-                                      NULL);
+	dialog = gtk_builder_get_object(state->builder, "export_chooser");
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		FILE *file;
-		
-		file = fopen(filename, "re");
-		if (file) {
-			fclose(file);
-			GtkWidget *confirm = gtk_message_dialog_new(NULL,
-					GTK_DIALOG_MODAL,
-					GTK_MESSAGE_QUESTION,
-					GTK_BUTTONS_YES_NO,
-					"File \"%s\" already exists, do you want to overwrite it?",
-					filename);
-			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
-				g_free(filename);
-				gtk_widget_destroy(confirm);
-				gtk_widget_destroy(dialog);
-				return;
-			}
-		}
 
 		file = fopen(filename, "we");
 		unsigned int max_beat = beat->beat;
-		fprintf(file, "#define BPM %s\n", gtk_entry_get_text(GTK_ENTRY(grid->bpm)));
+		fprintf(file, "#define BPM %s\n", gtk_entry_get_text(GTK_ENTRY(state->grid.bpm)));
 		fprintf(file, "%s", preamble);
 		{
-			struct beat *head = grid->beats;
+			struct beat *head = state->grid.beats;
 			while (head) {
 				max_beat = head->beat;
 				head = head->next;
@@ -148,7 +119,7 @@ static void export(GtkWidget *widget, gpointer data)
 		g_free(filename);
 		fclose(file);
 	}
-	gtk_widget_destroy(dialog);
+	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
 static void save(GtkWidget *widget, gpointer data)
@@ -199,7 +170,7 @@ static void save(GtkWidget *widget, gpointer data)
 			note = beat->note_list;
 			fprintf(file, "%d ", beat->beat);
 			while (note->next) {
-				fprintf(file, "%d,", note->note);
+				fprintf(file, "%d ", note->note);
 				note = note->next;
 			}
 			fprintf(file, "%d\n", note->note);
@@ -240,7 +211,12 @@ static void load(GtkWidget *widget, gpointer data)
 		while (fgets(line, MAX_LINE, file)) {
 			char *cursor;
 			beat = strtol(line, &cursor, 10);
-			while ((note = strtol(cursor, &cursor, 10))) {
+			while (!errno) {
+				char *tmp = cursor;
+				note = strtol(cursor, &cursor, 10);
+				if (tmp == cursor) {
+					break;
+				}
 				toggle_note(grid, note, beat);
 			}
 		}
@@ -253,70 +229,71 @@ static void load(GtkWidget *widget, gpointer data)
 
 int main(int argc, char *argv[]) 
 { 
-	GtkBuilder *builder;
 	GObject *window;
 	GObject *grid; 
-	GObject *save_button; 
-	GObject *export_button; 
-	GObject *load_button; 
 	GError *error = NULL;
-	struct note_grid note_grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 };
+	//struct note_grid note_grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 };
+	struct application_state state = {
+		.grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 },
+		.builder = gtk_builder_new()
+	};
+
 	gtk_init(&argc, &argv); 
 
 	/* Load the UI description */
-	builder = gtk_builder_new ();
-	if (gtk_builder_add_from_file (builder, "geepui.ui", &error) == 0)
+	state.builder = gtk_builder_new ();
+	if (gtk_builder_add_from_file(state.builder, "geepui.ui", &error) == 0)
 	{
-		g_printerr ("Error loading file: %s\n", error->message);
-		g_clear_error (&error);
+		g_printerr("Error loading file: %s\n", error->message);
+		g_clear_error(&error);
 		return 1;
 	}
 
-	window = gtk_builder_get_object(builder, "window");
+	window = gtk_builder_get_object(state.builder, "window");
 	gtk_widget_add_events(GTK_WIDGET(window), GDK_SCROLL_MASK);
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(window, "scroll-event", G_CALLBACK(scroll), &note_grid);
+	g_signal_connect(window, "scroll-event", G_CALLBACK(scroll), &state.grid);
 
 	/* Generate main note button grid */
-	grid = gtk_builder_get_object(builder, "note_grid");
+	grid = gtk_builder_get_object(state.builder, "note_grid");
 	for (int i = 0; i < ROWS; i++) {
 		for (int j = 0; j < COLUMNS; j++) {
 			int idx = i * COLUMNS + j;
-			note_grid.buttons[idx] = gtk_toggle_button_new();
-			gtk_widget_set_size_request(note_grid.buttons[idx], 10, 10);
-			g_signal_connect(note_grid.buttons[idx], "pressed",
-					G_CALLBACK(note_button), &note_grid);
-			gtk_grid_attach(GTK_GRID(grid), note_grid.buttons[idx], j, i, 1, 1); 
+			GtkWidget *drawing = gtk_drawing_area_new();
+			state.grid.buttons[idx] = (struct note_button){
+				.x = j, .y = i,
+				.grid = &state.grid,
+				.widget = drawing
+			};
+			gtk_widget_set_size_request(drawing, 10, 10);
+			gtk_widget_add_events(drawing, GDK_BUTTON_PRESS_MASK);
+			//g_signal_connect(drawing, "pressed", G_CALLBACK(note_button), &state.grid.buttons[idx]);
+			g_signal_connect(drawing, "button-press-event", G_CALLBACK(note_button), &state.grid.buttons[idx]);
+			g_signal_connect(drawing, "draw", G_CALLBACK(draw_note), &state.grid.buttons[idx]);
+			gtk_grid_attach(GTK_GRID(grid), drawing, j, i, 1, 1); 
 		}
 	}
 
 	/* Create the lhs keyboard and attach it */
-	note_grid.keyboard = gtk_drawing_area_new();
-	g_signal_connect(note_grid.keyboard, "draw",
-			G_CALLBACK(draw_keyboard), &note_grid);
+	state.grid.keyboard = gtk_drawing_area_new();
+	g_signal_connect(state.grid.keyboard, "draw",
+			G_CALLBACK(draw_keyboard), &state.grid);
 	for (int i = 0; i < KEY_WIDTH; i++) {
 		gtk_grid_insert_column(GTK_GRID(grid), 0);
 	}
-	gtk_grid_attach(GTK_GRID(grid), note_grid.keyboard, 0, 0, KEY_WIDTH, ROWS);
+	gtk_grid_attach(GTK_GRID(grid), state.grid.keyboard, 0, 0, KEY_WIDTH, ROWS);
 	
 	/* Create the top beat bar and attach it */
-	note_grid.beat_bar = gtk_drawing_area_new();
-	g_signal_connect(note_grid.beat_bar, "draw",
-			G_CALLBACK(draw_beat_bar), &note_grid);
+	state.grid.beat_bar = gtk_drawing_area_new();
+	g_signal_connect(state.grid.beat_bar, "draw",
+			G_CALLBACK(draw_beat_bar), &state.grid);
 	gtk_grid_insert_row(GTK_GRID(grid), 0);
-	gtk_grid_attach(GTK_GRID(grid), note_grid.beat_bar, KEY_WIDTH, 0, COLUMNS, 1);
+	gtk_grid_attach(GTK_GRID(grid), state.grid.beat_bar, KEY_WIDTH, 0, COLUMNS, 1);
 	
-	/* Save button */
-	save_button = gtk_builder_get_object(builder, "save");
-	g_signal_connect(save_button, "activate", G_CALLBACK(save), &note_grid);
-
-	/* Export button */
-	export_button = gtk_builder_get_object(builder, "export");
-	g_signal_connect(export_button, "activate", G_CALLBACK(export), &note_grid);
-
-	/* Export button */
-	load_button = gtk_builder_get_object(builder, "load");
-	g_signal_connect(load_button, "activate", G_CALLBACK(load), &note_grid);
+	gtk_builder_add_callback_symbol(state.builder, "save", G_CALLBACK(save));
+	gtk_builder_add_callback_symbol(state.builder, "export", G_CALLBACK(export));
+	gtk_builder_add_callback_symbol(state.builder, "load", G_CALLBACK(load));
+	gtk_builder_connect_signals(state.builder, &state);
 
 	/* BPM entry */
 	{
@@ -324,9 +301,9 @@ int main(int argc, char *argv[])
 		gtk_widget_set_size_request(label, 10, 10);
 		gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
 	}
-	note_grid.bpm = gtk_entry_new_with_buffer(gtk_entry_buffer_new("120", -1));
-	gtk_entry_set_width_chars(GTK_ENTRY(note_grid.bpm), 3);
-	gtk_grid_attach(GTK_GRID(grid), note_grid.bpm, 1, 0, KEY_WIDTH - 1, 1);
+	state.grid.bpm = gtk_entry_new_with_buffer(gtk_entry_buffer_new("120", -1));
+	gtk_entry_set_width_chars(GTK_ENTRY(state.grid.bpm), 3);
+	gtk_grid_attach(GTK_GRID(grid), state.grid.bpm, 1, 0, KEY_WIDTH - 1, 1);
 
 	gtk_widget_show_all(GTK_WIDGET(window)); 
 	gtk_main(); 

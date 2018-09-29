@@ -12,8 +12,9 @@
  */
 #define NUM_NOTES 108
 
-/* Array of all notes from c0 to b8 */
+enum note_state {off, separate, held};
 
+/* Array of all notes from c0 to b8 */
 static const int notes[NUM_NOTES] = {
 	16,   17,   18,   19,   21,   22,   23,   25,   26,   28,   29,   31, 
 	33,   35,   37,   39,   41,   44,   46,   49,   52,   55,   58,   62, 

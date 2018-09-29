@@ -12,6 +12,7 @@ struct note *add_note(struct note **head, unsigned int value)
 {
 	struct note *note = malloc(sizeof(struct note));
 	note->note = value;
+	note->state = separate;
 	note->next = NULL;
 	if (!(*head)) {
 		*head = note;
@@ -104,6 +105,15 @@ struct beat *get_beat(struct beat *head, unsigned int value)
 	return head;
 }
 
+struct note *get_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat)
+{
+	struct beat *b = get_beat(grid->beats, beat);
+	if (b) {
+		return get_note(b->note_list, note);
+	}
+	return NULL;
+}
+
 bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat)
 {
 	struct beat *b = get_beat(grid->beats, beat);
@@ -117,10 +127,15 @@ void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
 {
 	struct beat *b = get_beat(grid->beats, beat);
 	if (b) {
-		if (contains_note(b->note_list, note)) {
-			remove_note(&b->note_list, note);
-			if (!b->note_list) {
-				remove_beat(&grid->beats, beat);
+		struct note *n = get_note(b->note_list, note);
+		if (n) {
+			n->state++;
+			n->state %= 3;
+			if (n->state == off) {
+				remove_note(&b->note_list, note);
+				if (!b->note_list) {
+					remove_beat(&grid->beats, beat);
+				}
 			}
 		} else {
 			add_note(&b->note_list, note);
