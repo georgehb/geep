@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -g  `pkg-config --cflags gtk+-3.0`
+CFLAGS=-Wall -O3  `pkg-config --cflags gtk+-3.0`
 LDFLAGS=`pkg-config --libs gtk+-3.0`
 
 .PHONY : all
@@ -7,10 +7,10 @@ all : geepui
 
 default : all
 
-geepui : geepui.o drawing.o note_grid.o
+geepui : *.o
 	${CC} ${CFLAGS} -o $@ $^ ${LDFLAGS}
 
-%.o : %.c notes.h Makefile
+%.o : %.c *.h Makefile
 	${CC} ${CFLAGS} -c -o $@ $<
 
 clean :

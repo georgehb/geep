@@ -18,16 +18,41 @@ struct application_state {
 	GtkBuilder *builder;
 };
 
-static void note_button(GtkWidget *widget, GdkEvent *event, gpointer data)
+static gboolean button_press(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
 	if (event->type != GDK_BUTTON_PRESS) {
-		return;
+		return false;
 	}
-	struct note_button *button = (struct note_button *)data;
-	unsigned int note = button->grid->note_offset + button->y;
-	unsigned int beat = button->grid->beat_offset + button->x;
-	toggle_note(button->grid, note, beat);
+	struct note_grid *grid = (struct note_grid *)data;
+	/* TODO: align properly with buttons */
+	grid->cur_x = event->x * COLUMNS / gtk_widget_get_allocated_width(widget);
+	grid->cur_y = event->y * ROWS / gtk_widget_get_allocated_height(widget);
+	unsigned int note = grid->note_offset + grid->cur_y;
+	unsigned int beat = grid->beat_offset + grid->cur_x;
+	toggle_note(grid, note, beat);
 	gtk_widget_queue_draw(widget);
+	return true;
+}
+
+static gboolean button_held(GtkWidget *widget, GdkEventMotion *event, gpointer data)
+{
+	/* TODO: Better drag functionality */
+	if (!(event->state & GDK_BUTTON1_MASK)) {
+		return false;
+	}
+	struct note_grid *grid = (struct note_grid *)data;
+	unsigned int x = event->x * COLUMNS / gtk_widget_get_allocated_width(widget);
+	unsigned int y = event->y * ROWS / gtk_widget_get_allocated_height(widget);
+	if (x == grid->cur_x && y == grid->cur_y) {
+		return false;
+	}
+	grid->cur_x = x;
+	grid->cur_y = y;
+	unsigned int note = grid->note_offset + grid->cur_y;
+	unsigned int beat = grid->beat_offset + grid->cur_x;
+	toggle_note(grid, note, beat);
+	gtk_widget_queue_draw(widget);
+	return true;
 }
 
 static void update_grid(struct note_grid *grid)
@@ -79,16 +104,43 @@ static void export(GtkWidget *widget, gpointer data)
 	struct application_state *state = (struct application_state *)data;
 	struct beat *beat = state->grid.beats;
 	struct note *note;
-	GObject *dialog;
+	GtkWidget *dialog;
 	gint res;
 	if (!beat) {
 		return;
 	}
-	dialog = gtk_builder_get_object(state->builder, "export_chooser");
+	dialog = gtk_file_chooser_dialog_new ("Export File",
+                                      NULL,
+                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+                                      "Cancel", GTK_RESPONSE_CANCEL,
+                                      "Export", GTK_RESPONSE_ACCEPT,
+                                      NULL);
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		FILE *file;
+		
+		file = fopen(filename, "re");
+		if (file) {
+			fclose(file);
+			GtkWidget *confirm = gtk_message_dialog_new(NULL,
+					GTK_DIALOG_MODAL,
+					GTK_MESSAGE_QUESTION,
+					GTK_BUTTONS_NONE,
+					"File \"%s\" already exists, do you want to overwrite it?",
+					filename);
+			gtk_dialog_add_buttons(GTK_DIALOG(confirm),
+					"Cancel", GTK_RESPONSE_CANCEL,
+					"Overwrite", GTK_RESPONSE_ACCEPT,
+					NULL);
+			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
+				g_free(filename);
+				gtk_widget_destroy(confirm);
+				gtk_widget_destroy(dialog);
+				return;
+			}
+			gtk_widget_destroy(confirm);
+		}
 
 		file = fopen(filename, "we");
 		unsigned int max_beat = beat->beat;
@@ -137,10 +189,8 @@ static void save(GtkWidget *widget, gpointer data)
 	dialog = gtk_file_chooser_dialog_new ("Save File",
                                       NULL,
                                       GTK_FILE_CHOOSER_ACTION_SAVE,
-                                      "Cancel",
-                                      GTK_RESPONSE_CANCEL,
-                                      "Save",
-                                      GTK_RESPONSE_ACCEPT,
+                                      "Cancel", GTK_RESPONSE_CANCEL,
+                                      "Save", GTK_RESPONSE_ACCEPT,
                                       NULL);
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
@@ -153,15 +203,20 @@ static void save(GtkWidget *widget, gpointer data)
 			GtkWidget *confirm = gtk_message_dialog_new(NULL,
 					GTK_DIALOG_MODAL,
 					GTK_MESSAGE_QUESTION,
-					GTK_BUTTONS_YES_NO,
+					GTK_BUTTONS_NONE,
 					"File \"%s\" already exists, do you want to overwrite it?",
 					filename);
+			gtk_dialog_add_buttons(GTK_DIALOG(confirm),
+					"Cancel", GTK_RESPONSE_CANCEL,
+					"Overwrite", GTK_RESPONSE_ACCEPT,
+					NULL);
 			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
 				g_free(filename);
 				gtk_widget_destroy(confirm);
 				gtk_widget_destroy(dialog);
 				return;
 			}
+			gtk_widget_destroy(confirm);
 		}
 
 		file = fopen(filename, "we");
@@ -232,9 +287,13 @@ int main(int argc, char *argv[])
 	GObject *window;
 	GObject *grid; 
 	GError *error = NULL;
-	//struct note_grid note_grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 };
 	struct application_state state = {
-		.grid = { .note_offset = 48 - ROWS / 2, .beat_offset = 0 },
+		.grid = {
+			.note_offset = 48 - ROWS / 2,
+			.beat_offset = 0,
+			.cur_x = 0,
+			.cur_y = 0
+		},
 		.builder = gtk_builder_new()
 	};
 
@@ -256,6 +315,18 @@ int main(int argc, char *argv[])
 
 	/* Generate main note button grid */
 	grid = gtk_builder_get_object(state.builder, "note_grid");
+	state.grid.grid = gtk_grid_new();
+	gtk_grid_set_row_homogeneous(GTK_GRID(state.grid.grid), true);
+	gtk_grid_set_column_homogeneous(GTK_GRID(state.grid.grid), true);
+	{
+		GtkWidget *event = gtk_event_box_new();
+		gtk_widget_add_events(event, GDK_BUTTON_PRESS_MASK);
+		gtk_widget_add_events(event, GDK_POINTER_MOTION_MASK);
+		g_signal_connect(event, "button-press-event", G_CALLBACK(button_press), &state.grid);
+		g_signal_connect(event, "motion-notify-event", G_CALLBACK(button_held), &state.grid);
+		gtk_container_add(GTK_CONTAINER(event), state.grid.grid);
+		gtk_grid_attach(GTK_GRID(grid), event, 0, 0, COLUMNS, ROWS);
+	}
 	for (int i = 0; i < ROWS; i++) {
 		for (int j = 0; j < COLUMNS; j++) {
 			int idx = i * COLUMNS + j;
@@ -265,12 +336,8 @@ int main(int argc, char *argv[])
 				.grid = &state.grid,
 				.widget = drawing
 			};
-			gtk_widget_set_size_request(drawing, 10, 10);
-			gtk_widget_add_events(drawing, GDK_BUTTON_PRESS_MASK);
-			//g_signal_connect(drawing, "pressed", G_CALLBACK(note_button), &state.grid.buttons[idx]);
-			g_signal_connect(drawing, "button-press-event", G_CALLBACK(note_button), &state.grid.buttons[idx]);
 			g_signal_connect(drawing, "draw", G_CALLBACK(draw_note), &state.grid.buttons[idx]);
-			gtk_grid_attach(GTK_GRID(grid), drawing, j, i, 1, 1); 
+			gtk_grid_attach(GTK_GRID(state.grid.grid), drawing, j, i, 1, 1); 
 		}
 	}
 
@@ -296,14 +363,12 @@ int main(int argc, char *argv[])
 	gtk_builder_connect_signals(state.builder, &state);
 
 	/* BPM entry */
-	{
-		GtkWidget *label = gtk_label_new("BPM");
-		gtk_widget_set_size_request(label, 10, 10);
-		gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
-	}
+	gtk_grid_attach(GTK_GRID(grid), gtk_label_new("BPM"), 0, 0, 1, 1);
 	state.grid.bpm = gtk_entry_new_with_buffer(gtk_entry_buffer_new("120", -1));
 	gtk_entry_set_width_chars(GTK_ENTRY(state.grid.bpm), 3);
 	gtk_grid_attach(GTK_GRID(grid), state.grid.bpm, 1, 0, KEY_WIDTH - 1, 1);
+
+	printf("%d\n", gtk_widget_get_has_window(state.grid.grid));
 
 	gtk_widget_show_all(GTK_WIDGET(window)); 
 	gtk_main(); 
