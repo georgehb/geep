@@ -2,6 +2,13 @@
 #include "note_grid.h"
 #include "notes.h"
 #include <gtk/gtk.h>
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI (4*atan(1))
+#endif
+
+#define CORNER_RADIUS 5
 
 static bool is_black(int note)
 {
@@ -131,7 +138,7 @@ gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
 	gdk_cairo_set_source_rgba(cr, &black);
 	for (int i = 0; i < COLUMNS; i++) {
 		guint button_width = gtk_widget_get_allocated_width(grid->buttons[i].widget);
-		snprintf(beat_str, 20, "%d", grid->beat_offset + i);
+		snprintf(beat_str, 20, "%d", grid->beat_offset + i + 1);
 		int text_width;
 		int text_height;
 		cairo_save(cr);
@@ -152,42 +159,51 @@ gboolean draw_note(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
 	guint width;
 	guint height;
-	GdkRGBA color;
 	GtkStyleContext *context;
 	struct note_button *button = (struct note_button *)data;
 	unsigned int note = button->grid->note_offset + button->y;
 	unsigned int beat = button->grid->beat_offset + button->x;
 	struct note *n = get_note_beat(button->grid, note, beat);
-
-	GdkRGBA black = (GdkRGBA){0, 0, 0, 1};
-	GdkRGBA grey = (GdkRGBA){0.5, 0.5, 0.5, 1.0};
-	GdkRGBA white = (GdkRGBA){1, 1, 1, 1};
-
-	context = gtk_widget_get_style_context(widget);
+	struct note *n_prev = get_note_beat(button->grid, note, beat-1);
+	struct note *n_next = get_note_beat(button->grid, note, beat+1);
+	static GtkWidget *b = NULL;
+	if (!b) {
+		b = gtk_button_new();
+	}
+	context = gtk_widget_get_style_context(b);
 
 	width = gtk_widget_get_allocated_width(widget);
 	height = gtk_widget_get_allocated_height(widget);
 
-	gtk_render_background(context, cr, 0, 0, width, height);
-
-	cairo_rectangle(cr, 1, 1, width - 2, height - 2);
 	if (!n) {
-		color = black;
+		gtk_style_context_set_state(context, GTK_STATE_FLAG_NORMAL);
+		gtk_render_background(context, cr, 0, 0, width, height);
+		gtk_render_frame(context, cr, 0, 0, width, height);
 	} else {
 		switch (n->state) {
 			case off:
-				color = black;
+				gtk_style_context_set_state(context, GTK_STATE_FLAG_NORMAL);
 				break;
 			case separate:
-				color = grey;
-				break;
 			case held:
-				color = white;
+				gtk_style_context_set_state(context, GTK_STATE_FLAG_ACTIVE);
 				break;
 		}
+		if (n_prev && n_prev->state == held && n_next && n->state == held) {
+			gtk_render_background(context, cr, -width, 0, 3*width, height);
+			gtk_render_frame(context, cr, -width, 0, 3*width, height);
+		} else if (n_prev && n_prev->state == held) {
+			gtk_render_background(context, cr, -width, 0, 2*width, height);
+			gtk_render_frame(context, cr, -width, 0, 2*width, height);
+		} else if (n_next && n->state == held) {
+			gtk_render_background(context, cr, 0, 0, 2*width, height);
+			gtk_render_frame(context, cr, 0, 0, 2*width, height);
+		} else {
+			gtk_render_background(context, cr, 0, 0, width, height);
+			gtk_render_frame(context, cr, 0, 0, width, height);
+		}
 	}
-	gdk_cairo_set_source_rgba(cr, &color);
-	cairo_fill(cr);
 
-	return FALSE;
+	cairo_fill(cr);
+	return false;
 }

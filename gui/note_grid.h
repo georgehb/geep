@@ -24,15 +24,9 @@ struct beat {
 
 struct note_grid {
 	struct note_button buttons[BUTTONS];
-	GtkWidget *keyboard;
-	GtkWidget *beat_bar;
-	GtkWidget *bpm;
-	GtkWidget *grid;
 	struct beat *beats;
 	unsigned int note_offset;
 	unsigned int beat_offset;
-	unsigned int cur_x;
-	unsigned int cur_y;
 };
 
 
