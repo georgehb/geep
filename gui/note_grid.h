@@ -7,7 +7,7 @@
 #include "notes.h"
 
 #define ROWS 20
-#define COLUMNS 20
+#define COLUMNS 30
 #define BUTTONS (ROWS * COLUMNS)
 
 struct note {

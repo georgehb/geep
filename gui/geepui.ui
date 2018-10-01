@@ -5,6 +5,13 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
+      <object class="GtkMenuItem" id="new">
+        <property name="can_focus">False</property>
+        <property name="label">New</property>
+        <signal name="activate" handler="new" swapped="no"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkMenuItem" id="save">
         <property name="can_focus">False</property>
         <property name="label">Save...</property>

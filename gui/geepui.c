@@ -10,8 +10,8 @@
 #include <stdlib.h>
 
 #define MAX_BEATS UINT32_MAX
-#define MAX_LINE 512 /* Maximum line length to read */
-#define KEY_WIDTH 3
+#define MAX_STRING 512 /* Maximum lengths of any strings */
+#define KEY_WIDTH 5
 
 struct application_state {
 	struct note_grid note_grid;
@@ -123,6 +123,42 @@ static void scroll(GtkWidget *widget, GdkEventScroll *event, gpointer data)
 	gtk_widget_queue_draw(state->beat_bar);
 }
 
+static bool confirm_dialog(const gchar *title,
+		const gchar *message,
+		const gchar *yes_button,
+		const gchar *no_button)
+{
+	GtkWidget *confirm = gtk_dialog_new_with_buttons(
+			title,
+			NULL,
+			GTK_DIALOG_MODAL,
+			no_button, GTK_RESPONSE_REJECT,
+			yes_button, GTK_RESPONSE_ACCEPT,
+			NULL);
+	GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(confirm));
+	gtk_container_add(GTK_CONTAINER(content), gtk_label_new(message));
+	gtk_box_set_spacing(GTK_BOX(content), 6);
+	gtk_container_set_border_width(GTK_CONTAINER(content), 6);
+
+	/* Ensure that the dialog box is destroyed when the user responds */
+	gtk_widget_show_all(confirm);
+	bool res = (gtk_dialog_run(GTK_DIALOG(confirm)) == GTK_RESPONSE_ACCEPT); 
+	gtk_widget_destroy(confirm);
+	return res;
+}
+
+static void new(GtkWidget *widget, gpointer data)
+{
+	(void) widget;
+	struct application_state *state = (struct application_state *)data;
+	if (!state->note_grid.beats || !confirm_dialog("New file", "Are you sure? You will lose any unsaved work.", "Yes", "No")) {
+		return;
+	}
+	note_grid_clear(&state->note_grid);
+	update_grid(&state->note_grid);
+	update_menu_state(state);
+}
+
 static void export(GtkWidget *widget, gpointer data)
 {
 	(void) widget;
@@ -148,23 +184,16 @@ static void export(GtkWidget *widget, gpointer data)
 		file = fopen(filename, "re");
 		if (file) {
 			fclose(file);
-			GtkWidget *confirm = gtk_message_dialog_new(NULL,
-					GTK_DIALOG_MODAL,
-					GTK_MESSAGE_QUESTION,
-					GTK_BUTTONS_NONE,
-					"File \"%s\" already exists, do you want to overwrite it?",
-					filename);
-			gtk_dialog_add_buttons(GTK_DIALOG(confirm),
-					"Cancel", GTK_RESPONSE_CANCEL,
-					"Overwrite", GTK_RESPONSE_ACCEPT,
-					NULL);
-			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
+			char message[MAX_STRING];
+			snprintf(message, MAX_STRING, "File \"%s\" \n already exists, do you want to overwrite it?", filename);
+			if (!confirm_dialog("Overwrite file",
+						message,
+						"Overwrite",
+						"Cancel")) {
 				g_free(filename);
-				gtk_widget_destroy(confirm);
 				gtk_widget_destroy(dialog);
 				return;
 			}
-			gtk_widget_destroy(confirm);
 		}
 
 		file = fopen(filename, "we");
@@ -262,23 +291,16 @@ static void save(GtkWidget *widget, gpointer data)
 		file = fopen(filename, "re");
 		if (file) {
 			fclose(file);
-			GtkWidget *confirm = gtk_message_dialog_new(NULL,
-					GTK_DIALOG_MODAL,
-					GTK_MESSAGE_QUESTION,
-					GTK_BUTTONS_NONE,
-					"File \"%s\" already exists, do you want to overwrite it?",
-					filename);
-			gtk_dialog_add_buttons(GTK_DIALOG(confirm),
-					"Cancel", GTK_RESPONSE_CANCEL,
-					"Overwrite", GTK_RESPONSE_ACCEPT,
-					NULL);
-			if (gtk_dialog_run(GTK_DIALOG(confirm)) != GTK_RESPONSE_ACCEPT) {
+			char message[MAX_STRING];
+			snprintf(message, MAX_STRING, "File \"%s\" \n already exists, do you want to overwrite it?", filename);
+			if (!confirm_dialog("Overwrite file",
+						message,
+						"Overwrite",
+						"Cancel")) {
 				g_free(filename);
-				gtk_widget_destroy(confirm);
 				gtk_widget_destroy(dialog);
 				return;
 			}
-			gtk_widget_destroy(confirm);
 		}
 
 		file = fopen(filename, "we");
@@ -312,7 +334,7 @@ static void load(GtkWidget *widget, gpointer data)
 
 	dialog = gtk_file_chooser_dialog_new ("Load File",
                                       NULL,
-                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+                                      GTK_FILE_CHOOSER_ACTION_OPEN,
                                       "Cancel",
                                       GTK_RESPONSE_CANCEL,
                                       "Load",
@@ -330,18 +352,22 @@ static void load(GtkWidget *widget, gpointer data)
 	}
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
-		char line[MAX_LINE];
+		char line[MAX_STRING];
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		FILE *file = fopen(filename, "re");
 		if (!file) {
 			gtk_widget_destroy(dialog);
 			return;
 		}
+		if (state->note_grid.beats && !confirm_dialog("Load file", "Are you sure? You will lose any unsaved work.", "Yes", "No")) {
+			gtk_widget_destroy(dialog);
+			return;
+		}
 		note_grid_clear(&state->note_grid);
-		fgets(line, MAX_LINE, file);
+		fgets(line, MAX_STRING, file);
 		sprintf(line, "%ld", strtol(line, NULL, 10));
 		gtk_entry_set_text(GTK_ENTRY(state->bpm), line);
-		while (fgets(line, MAX_LINE, file)) {
+		while (fgets(line, MAX_STRING, file)) {
 			char *cursor;
 			beat = strtol(line, &cursor, 10);
 			while (!errno) {
@@ -435,6 +461,7 @@ int main(int argc, char *argv[])
 	gtk_grid_attach(GTK_GRID(grid), state.beat_bar, KEY_WIDTH, 0, COLUMNS, 1);
 	
 	/* Connect up the menu item signals */
+	gtk_builder_add_callback_symbol(state.builder, "new", G_CALLBACK(new));
 	gtk_builder_add_callback_symbol(state.builder, "save", G_CALLBACK(save));
 	gtk_builder_add_callback_symbol(state.builder, "export", G_CALLBACK(export));
 	gtk_builder_add_callback_symbol(state.builder, "load", G_CALLBACK(load));
@@ -445,10 +472,10 @@ int main(int argc, char *argv[])
 	state.menu.load = GTK_WIDGET(gtk_builder_get_object(state.builder, "load"));
 
 	/* BPM entry */
-	gtk_grid_attach(GTK_GRID(grid), gtk_label_new("BPM"), 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gtk_label_new("BPM"), 0, 0, 2, 1);
 	state.bpm = gtk_entry_new_with_buffer(gtk_entry_buffer_new("120", -1));
 	gtk_entry_set_width_chars(GTK_ENTRY(state.bpm), 3);
-	gtk_grid_attach(GTK_GRID(grid), state.bpm, 1, 0, KEY_WIDTH - 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), state.bpm, 2, 0, KEY_WIDTH - 2, 1);
 
 	update_menu_state(&state);
 	gtk_widget_show_all(GTK_WIDGET(window)); 

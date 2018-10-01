@@ -100,6 +100,7 @@ gboolean draw_keyboard(GtkWidget *widget, cairo_t *cr, gpointer data)
 
 gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
+	#define BAR_LENGTH 16
 	guint width;
 	guint height;
 	GdkRGBA white = (GdkRGBA){1.0, 1.0, 1.0, 1.0};
@@ -113,13 +114,31 @@ gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
 	gtk_render_background(context, cr, 0, 0, width, height);
 	
 	cairo_save(cr);
-	for (int i = 0; i < COLUMNS; i++) {
+	/*for (int i = 0; i < COLUMNS; i++) {
 		guint button_width = gtk_widget_get_allocated_width(grid->buttons[i].widget);
 		cairo_rectangle(cr, 1, 0, button_width-2, height);
 		cairo_translate(cr, button_width, 0);
-	}
+	}*/
+	cairo_rectangle(cr, 0, 0, width, height);
 	gdk_cairo_set_source_rgba(cr, &white);
 	cairo_fill(cr);
+	cairo_restore(cr);
+
+	/* Then the bar lines */
+	cairo_save(cr);
+	gdk_cairo_set_source_rgba(cr, &black);
+	for (int i = 0; i < COLUMNS; i++) {
+		guint button_width = gtk_widget_get_allocated_width(grid->buttons[i].widget);
+		if (!((grid->beat_offset + i) % BAR_LENGTH)) {
+			cairo_rectangle(cr, -1, 0, 2, height);
+		} else if ((grid->beat_offset + i) % 4) {
+			cairo_rectangle(cr, -1, 0.75 * height, 2, 0.25 * height);
+		} else {
+			cairo_rectangle(cr, -1, 0.5 * height, 2, 0.5 * height);
+		}
+		cairo_fill(cr);
+		cairo_translate(cr, button_width, 0);
+	}
 	cairo_restore(cr);
 	
 	/* Then the labels */
@@ -138,7 +157,11 @@ gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
 	gdk_cairo_set_source_rgba(cr, &black);
 	for (int i = 0; i < COLUMNS; i++) {
 		guint button_width = gtk_widget_get_allocated_width(grid->buttons[i].widget);
-		snprintf(beat_str, 20, "%d", grid->beat_offset + i + 1);
+		if ((grid->beat_offset + i) % BAR_LENGTH) {
+			cairo_translate(cr, button_width, 0);
+			continue;
+		}
+		snprintf(beat_str, 20, "%d", (grid->beat_offset + i) / BAR_LENGTH + 1);
 		int text_width;
 		int text_height;
 		cairo_save(cr);
@@ -147,6 +170,7 @@ gboolean draw_beat_bar(GtkWidget *widget, cairo_t *cr, gpointer data)
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
 		cairo_translate(cr, 0.5 * (button_width - text_width), -0.5 * text_height);
 		pango_cairo_show_layout(cr, layout);
+		cairo_fill(cr);
 		cairo_restore(cr);
 		cairo_translate(cr, button_width, 0);
 	}
