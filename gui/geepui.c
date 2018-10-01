@@ -183,13 +183,39 @@ static void export(GtkWidget *widget, gpointer data)
 				fprintf(file, "\trest(SEMIQUAVER);\n");
 				continue;
 			}
+			int num_separated = 0;
 			note = beat->note_list;
 			fprintf(file, "\tbeep(SEMIQUAVER, %d, ", num_notes(note));
 			while (note->next) {
 				fprintf(file, "%s, ", note_names[note->note]);
+				if (note->state == separate) {
+					num_separated++;
+				}
 				note = note->next;
 			}
 			fprintf(file, "%s);\n", note_names[note->note]);
+			if (note->state == separate) {
+				num_separated++;
+			}
+			if (num_separated > 0) {
+				note = beat->note_list;
+				if (num_separated == num_notes(note)) {
+					fprintf(file, "\trest(SEPARATION);\n");
+					beat = beat->next;
+					continue;
+				}
+				fprintf(file, "\tbeep(SEPARATION, %d", num_notes(note) - num_separated);
+				while (note->next) {
+					if (note->state == held) {
+						fprintf(file, ", %s", note_names[note->note]);
+					}
+					note = note->next;
+				}
+				if (note->state == held) {
+					fprintf(file, ", %s", note_names[note->note]);
+				}
+				fprintf(file, ");\n");
+			}
 			beat = beat->next;
 		}
 		fprintf(file, "%s", end_string);
@@ -217,11 +243,22 @@ static void save(GtkWidget *widget, gpointer data)
                                       "Cancel", GTK_RESPONSE_CANCEL,
                                       "Save", GTK_RESPONSE_ACCEPT,
                                       NULL);
+	{
+		GtkFileFilter *filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, "Geep Script (*.geep)");
+		gtk_file_filter_add_pattern(filter, "*.geep");
+		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+		filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, "All Files");
+		gtk_file_filter_add_pattern(filter, "*");
+		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	}
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		FILE *file;
 		
+		/* TODO: auto-append .geep to filename */
 		file = fopen(filename, "re");
 		if (file) {
 			fclose(file);
@@ -251,9 +288,11 @@ static void save(GtkWidget *widget, gpointer data)
 			fprintf(file, "%d ", beat->beat);
 			while (note->next) {
 				fprintf(file, "%d ", note->note);
+				fprintf(file, "%d ", note->state);
 				note = note->next;
 			}
-			fprintf(file, "%d\n", note->note);
+			fprintf(file, "%d ", note->note);
+			fprintf(file, "%d\n", note->state);
 			beat = beat->next;
 		}
 		g_free(filename);
@@ -279,12 +318,26 @@ static void load(GtkWidget *widget, gpointer data)
                                       "Load",
                                       GTK_RESPONSE_ACCEPT,
                                       NULL);
+	{
+		GtkFileFilter *filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, "Geep Script (*.geep)");
+		gtk_file_filter_add_pattern(filter, "*.geep");
+		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+		filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, "All Files");
+		gtk_file_filter_add_pattern(filter, "*");
+		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	}
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
-		note_grid_clear(&state->note_grid);
 		char line[MAX_LINE];
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		FILE *file = fopen(filename, "re");
+		if (!file) {
+			gtk_widget_destroy(dialog);
+			return;
+		}
+		note_grid_clear(&state->note_grid);
 		fgets(line, MAX_LINE, file);
 		sprintf(line, "%ld", strtol(line, NULL, 10));
 		gtk_entry_set_text(GTK_ENTRY(state->bpm), line);
@@ -298,6 +351,7 @@ static void load(GtkWidget *widget, gpointer data)
 					break;
 				}
 				toggle_note(&state->note_grid, note, beat);
+				get_note_beat(&state->note_grid, note, beat)->state = strtol(cursor, &cursor, 10);
 			}
 		}
 		g_free(filename);
