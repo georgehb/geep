@@ -1,10 +1,10 @@
 #ifndef NOTE_GRID_H
 #define NOTE_GRID_H
 
-#include <gtk/gtk.h>
-#include <stdbool.h>
 #include "drawing.h"
 #include "notes.h"
+#include <gtk/gtk.h>
+#include <stdbool.h>
 
 #define ROWS 20
 #define COLUMNS 30
@@ -34,7 +34,7 @@ unsigned int num_notes(struct note *head);
 bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat);
 struct note *get_note_beat(struct note_grid *grid, unsigned int note, unsigned int beat);
 
-void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat);
+struct note *toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat);
 void note_grid_clear(struct note_grid *grid);
 
 #endif /* NOTE_GRID_H */

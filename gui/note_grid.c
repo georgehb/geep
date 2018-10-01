@@ -123,7 +123,7 @@ bool contains_note_beat(struct note_grid *grid, unsigned int note, unsigned int 
 	return false;
 }
 
-void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
+struct note *toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
 {
 	struct beat *b = get_beat(grid->beats, beat);
 	if (b) {
@@ -138,12 +138,13 @@ void toggle_note(struct note_grid *grid, unsigned int note, unsigned int beat)
 				}
 			}
 		} else {
-			add_note(&b->note_list, note);
+			return add_note(&b->note_list, note);
 		}
 	} else {
 		b = add_beat(&grid->beats, beat);
-		add_note(&b->note_list, note);
+		return add_note(&b->note_list, note);
 	}
+	return NULL;
 }
 
 void note_grid_clear(struct note_grid *grid)
