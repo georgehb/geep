@@ -52,13 +52,19 @@ static gboolean button_press(GtkWidget *widget, GdkEventButton *event, gpointer 
 	}
 	struct application_state *state = (struct application_state *)data;
 	/* TODO: align properly with buttons */
-	state->cur_x = event->x * (double)COLUMNS / gtk_widget_get_allocated_width(widget);
-	state->cur_y = event->y * (double)ROWS / gtk_widget_get_allocated_height(widget);
+	state->cur_x = event->x * COLUMNS / gtk_widget_get_allocated_width(widget);
+	state->cur_y = event->y * ROWS / gtk_widget_get_allocated_height(widget);
 	unsigned int note = state->note_grid.note_offset + state->cur_y;
 	unsigned int beat = state->note_grid.beat_offset + state->cur_x;
 	toggle_note(&state->note_grid, note, beat);
 	update_menu_state(state);
-	gtk_widget_queue_draw(widget);
+	gtk_widget_queue_draw(state->note_grid.buttons[state->cur_y * COLUMNS + state->cur_x].widget);
+	if (state->cur_x > 0) {
+		gtk_widget_queue_draw(state->note_grid.buttons[state->cur_y * COLUMNS + state->cur_x - 1].widget);
+	}
+	if (state->cur_x < COLUMNS) {
+		gtk_widget_queue_draw(state->note_grid.buttons[state->cur_y * COLUMNS + state->cur_x + 1].widget);
+	}
 	return true;
 }
 
@@ -81,6 +87,12 @@ static gboolean button_held(GtkWidget *widget, GdkEventMotion *event, gpointer d
 	toggle_note(&state->note_grid, note, beat);
 	update_menu_state(state);
 	gtk_widget_queue_draw(state->note_grid.buttons[y * COLUMNS + x].widget);
+	if (state->cur_x > 0) {
+		gtk_widget_queue_draw(state->note_grid.buttons[state->cur_y * COLUMNS + state->cur_x - 1].widget);
+	}
+	if (state->cur_x < COLUMNS) {
+		gtk_widget_queue_draw(state->note_grid.buttons[state->cur_y * COLUMNS + state->cur_x + 1].widget);
+	}
 	return true;
 }
 
