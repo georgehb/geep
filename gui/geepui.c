@@ -22,10 +22,14 @@ struct application_state {
 	GtkWidget *bpm;
 	GtkWidget *grid;
 	struct {
+		GtkWidget *new;
 		GtkWidget *save;
 		GtkWidget *export;
 		GtkWidget *load;
 	} menu;
+	/* TODO: Update filenames when required */
+	char *export_filename;
+	char *save_filename;
 	unsigned int cur_x;
 	unsigned int cur_y;
 };
@@ -76,7 +80,7 @@ static gboolean button_held(GtkWidget *widget, GdkEventMotion *event, gpointer d
 	unsigned int beat = state->note_grid.beat_offset + state->cur_x;
 	toggle_note(&state->note_grid, note, beat);
 	update_menu_state(state);
-	gtk_widget_queue_draw(widget);
+	gtk_widget_queue_draw(state->note_grid.buttons[y * COLUMNS + x].widget);
 	return true;
 }
 
@@ -181,6 +185,21 @@ static void export(GtkWidget *widget, gpointer data)
                                       "Cancel", GTK_RESPONSE_CANCEL,
                                       "Export", GTK_RESPONSE_ACCEPT,
                                       NULL);
+	{
+		GtkFileFilter *filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, "C source file (*.c)");
+		gtk_file_filter_add_pattern(filter, "*.c");
+		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+		filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, "All Files");
+		gtk_file_filter_add_pattern(filter, "*");
+		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	}
+	if (state->export_filename) {
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), state->export_filename);
+	} else {
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "untitled.c");
+	}
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
@@ -286,6 +305,11 @@ static void save(GtkWidget *widget, gpointer data)
 		gtk_file_filter_set_name(filter, "All Files");
 		gtk_file_filter_add_pattern(filter, "*");
 		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	}
+	if (state->save_filename) {
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), state->save_filename);
+	} else {
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "untitled.geep");
 	}
 	res = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (res == GTK_RESPONSE_ACCEPT) {
@@ -398,6 +422,7 @@ static void load(GtkWidget *widget, gpointer data)
 int main(int argc, char *argv[]) 
 {
 	GObject *grid; 
+	GtkAccelGroup *accel = gtk_accel_group_new();
 	GError *error = NULL;
 	struct application_state state = {
 		.note_grid = {
@@ -406,7 +431,9 @@ int main(int argc, char *argv[])
 		},
 		.builder = gtk_builder_new(),
 		.cur_x = 0,
-		.cur_y = 0
+		.cur_y = 0,
+		.export_filename = NULL,
+		.save_filename = NULL
 	};
 
 	gtk_init(&argc, &argv); 
@@ -424,6 +451,7 @@ int main(int argc, char *argv[])
 	gtk_widget_add_events(state.window, GDK_SCROLL_MASK);
 	g_signal_connect(state.window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(state.window, "scroll-event", G_CALLBACK(scroll), &state);
+	gtk_window_add_accel_group(GTK_WINDOW(state.window), accel);
 
 	/* Generate main note button grid */
 	grid = gtk_builder_get_object(state.builder, "note_grid");
@@ -474,9 +502,15 @@ int main(int argc, char *argv[])
 	gtk_builder_add_callback_symbol(state.builder, "load", G_CALLBACK(load));
 	gtk_builder_connect_signals(state.builder, &state);
 
+	state.menu.new = GTK_WIDGET(gtk_builder_get_object(state.builder, "new"));
 	state.menu.save = GTK_WIDGET(gtk_builder_get_object(state.builder, "save"));
 	state.menu.export = GTK_WIDGET(gtk_builder_get_object(state.builder, "export"));
 	state.menu.load = GTK_WIDGET(gtk_builder_get_object(state.builder, "load"));
+
+	gtk_widget_add_accelerator(state.menu.new, "activate", accel, GDK_KEY_n, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	gtk_widget_add_accelerator(state.menu.save, "activate", accel, GDK_KEY_s, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	gtk_widget_add_accelerator(state.menu.export, "activate", accel, GDK_KEY_e, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	gtk_widget_add_accelerator(state.menu.load, "activate", accel, GDK_KEY_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 
 	/* BPM entry */
 	gtk_grid_attach(GTK_GRID(grid), gtk_label_new("BPM"), 0, 0, 2, 1);
