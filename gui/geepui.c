@@ -140,6 +140,43 @@ static void scroll(GtkWidget *widget, GdkEventScroll *event, gpointer data)
 	gtk_widget_queue_draw(state->beat_bar);
 }
 
+static void key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
+{
+	(void) widget;
+	struct application_state *state = (struct application_state *)data;
+	struct note_grid *note_grid = &state->note_grid;
+	switch (event->keyval) {
+		case GDK_KEY_Up:
+			if (note_grid->note_offset > 0) {
+				note_grid->note_offset--;
+			}
+			update_grid(note_grid);
+			break;
+		case GDK_KEY_Down:
+			if (note_grid->note_offset < NUM_NOTES - ROWS) {
+				note_grid->note_offset++;
+			}
+			update_grid(note_grid);
+			break;
+		case GDK_KEY_Left:
+			if (note_grid->beat_offset > 0) {
+				note_grid->beat_offset--;
+			}
+			update_grid(note_grid);
+			break;
+		case GDK_KEY_Right:
+			if (note_grid->beat_offset < MAX_BEATS) {
+				note_grid->beat_offset++;
+			}
+			update_grid(note_grid);
+			break;
+		default:
+			break;
+	}
+	gtk_widget_queue_draw(state->keyboard);
+	gtk_widget_queue_draw(state->beat_bar);
+}
+
 static bool confirm_dialog(GtkWindow *parent,
 		const gchar *title,
 		const gchar *message,
@@ -479,6 +516,7 @@ int main(int argc, char *argv[])
 		gtk_container_add(GTK_CONTAINER(event), state.grid);
 		gtk_grid_attach(GTK_GRID(grid), event, 0, 0, COLUMNS, ROWS);
 	}
+	g_signal_connect(grid, "key-press-event", G_CALLBACK(key_press), &state);
 	for (int i = 0; i < ROWS; i++) {
 		for (int j = 0; j < COLUMNS; j++) {
 			int idx = i * COLUMNS + j;

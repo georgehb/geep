@@ -35,7 +35,7 @@
   </object>
   <object class="GtkWindow" id="window">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
+    <property name="can_focus">True</property>
     <property name="title">Geep</property>
     <child>
       <placeholder/>
@@ -64,7 +64,7 @@
         </child>
         <child>
           <object class="GtkGrid" id="note_grid">
-            <property name="can_focus">False</property>
+            <property name="can_focus">True</property>
             <property name="row_homogeneous">True</property>
             <property name="column_homogeneous">True</property>
           </object>
