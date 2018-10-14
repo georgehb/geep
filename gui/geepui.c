@@ -80,6 +80,16 @@ static gboolean button_held(GtkWidget *widget, GdkEventMotion *event, gpointer d
 	if (x == state->cur_x && y == state->cur_y) {
 		return false;
 	}
+	if (x == state->cur_x + 1) {
+		struct note *prev = get_note_beat(&state->note_grid,
+				state->note_grid.note_offset + state->cur_y,
+				state->note_grid.beat_offset + state->cur_x);
+		if (prev && prev->state == separate) {
+			toggle_note(&state->note_grid,
+					state->note_grid.note_offset + state->cur_y,
+					state->note_grid.beat_offset + state->cur_x);
+		}
+	}
 	state->cur_x = x;
 	state->cur_y = y;
 	unsigned int note = state->note_grid.note_offset + state->cur_y;
