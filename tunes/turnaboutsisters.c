@@ -505,10 +505,14 @@ loop:
     beep(SEMIQUAVER,            7, gb2, gb3,   gb4,bb4,db5,         eb5,  eb6  );
     beep(SEMIQUAVER-SEPARATION, 5, gb2, gb3,   gb4,bb4,db5                     );
     rest(SEPARATION);
-    beep(SEMIQUAVER,            7, gb2, gb3,   gb4,bb4,db5,         eb5,  eb6  );
-    beep(SEMIQUAVER,            7, gb2, gb3,   gb4,bb4,db5,         eb5,  eb6  );
-    beep(SEMIQUAVER,            2,                                  eb5,  eb6  );
-    beep(SEMIQUAVER,            2,                                  eb5,  eb6  ); 
+    beep(QUAVER/4,              7, gb2, gb3,   gb4,bb4,db5,         eb5,  eb6  );
+    beep(QUAVER/4,              7, gb2, gb3,   gb4,bb4,db5,         eb5,  db6  );
+    beep(QUAVER/4,              7, gb2, gb3,   gb4,bb4,db5,         eb5,   c6  );
+    beep(QUAVER/4,              7, gb2, gb3,   gb4,bb4,db5,         eb5,  bb5  );
+    beep(QUAVER/4,              2,                                  eb5,  ab5  );
+    beep(QUAVER/4,              2,                                  eb5,  gb5  );
+    beep(QUAVER/4,              2,                                  eb5,   f5  );
+    beep(QUAVER/4,              1,                                        eb5  );
 
     //bar 31
     beep(SEMIQUAVER,            6, gb2, gb3,    bb4, db5,        ab4,  ab5  );
